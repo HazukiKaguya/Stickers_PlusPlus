@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        表情贴纸增强插件
 // @namespace   https://github.com/HazukiKaguya/Stickers_PlusPlus
-// @version     1.4.0
+// @version     1.4.1
 // @author      eddie32&喵拉布丁&HazukiKaguya
 // @description 回复表情，插图扩展插件，在发帖时快速输入自定义表情和论坛BBCODE
 // @icon        https://sticker.inari.site/favicon.ico
@@ -29,7 +29,7 @@
  */
 
 // 版本号
-const version = '1.4.0';
+const version = '1.4.1';
 // 网站是否为KfMobile
 const isKfMobile = typeof Info !== 'undefined' && typeof Info.imgPath !== 'undefined';
 // jQuery隔离
@@ -300,9 +300,9 @@ const createContainer = function (textArea) {
     <div class="kfe-loc-panel" style="display:none"><table><tr>
     <td><li><input type="checkbox" class="locbt" id="ng0" value="0">AC娘</li></td>
     <td><li><input type="checkbox" class="locbt" id="ng1" value="1">S1麻将脸</li></td>
-    <td><li><input type="checkbox" class="locbt" id="ng2" value="3">看板娘小B</li></td>
-    <td><li><input type="checkbox" class="locbt" id="ng3" value="4">微博贴吧</li></td>
-    <td><li><input type="checkbox" class="locbt" id="ng4" value="2">阿卡林</li></td></tr><tr>
+    <td><li><input type="checkbox" class="locbt" id="ng3" value="3">看板娘小B</li></td>
+    <td><li><input type="checkbox" class="locbt" id="ng4" value="4">微博贴吧</li></td>
+    <td><li><input type="checkbox" class="locbt" id="ng2" value="2">阿卡林</li></td></tr><tr>
     <td><li><input type="checkbox" class="locbt" id="ng5" value="5">暹罗猫小红豆</li></td>
     <td><li><input type="checkbox" class="locbt" id="ng6" value="6">LoveLive</li></td>
     <td><li><input type="checkbox" class="locbt" id="ng7" value="7">少女歌剧</li></td>
