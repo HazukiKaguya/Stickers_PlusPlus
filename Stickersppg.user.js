@@ -17,7 +17,6 @@
 // @license     MIT
 // @run-at      document-end
 // @require     https://cdn.jsdelivr.net/npm/jquery@2.2.4/dist/jquery.min.js
-// @updateURL   https://github.com/HazukiKaguya/Stickers_PlusPlus/raw/master/Stickerspp.user.js
 // ==/UserScript==
 // 本次更新日志：1.4.0 增加在线表情商店，重写个性化设置逻辑，修复bugs
 // 历史更新记录：https://github.com/HazukiKaguya/Stickers_PlusPlus#%E6%9B%B4%E6%96%B0%E8%AE%B0%E5%BD%95
