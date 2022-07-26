@@ -2,7 +2,7 @@
 
 表情贴纸增强插件，理论上应该适用于绝大部分使用bbcode的编辑/回复为纯文本模式的论坛  
 
-[打赏](https://github.com/HazukiKaguya/Stickers_PlusPlus#%E6%89%93%E8%B5%8F)
+[打赏](#%E6%89%93%E8%B5%8F)
 
 ## 安装脚本
 
