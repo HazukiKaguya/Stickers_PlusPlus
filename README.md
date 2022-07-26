@@ -1,14 +1,15 @@
-# Stickers_PlusPlus
-
+# Stickers_PlusPlus  
 表情贴纸增强插件，理论上应该适用于绝大部分使用bbcode的编辑/回复为纯文本模式的论坛  
+[更新记录](#%E6%9B%B4%E6%96%B0%E8%AE%B0%E5%BD%95)  
 
-[打赏](#%E6%89%93%E8%B5%8F)  
-[更新记录](#%E6%9B%B4%E6%96%B0%E8%AE%B0%E5%BD%95)
-
-## 安装脚本
-
+## 安装脚本  
 [Github](https://github.com/HazukiKaguya/Stickers_PlusPlus/raw/master/Stickerspp.user.js)  
-[GreasyFork](https://greasyfork.org/zh-CN/scripts/448465)
+[GreasyFork](https://greasyfork.org/zh-CN/scripts/448465)  
+
+## 赞助  
+如果你喜欢这个插件，可以用以下链接试用Vultr来赞助我的云同步账号服务器/图床服务器的费用。  
+[Refer Vultr.com and earn $10 per paid signup](https://www.vultr.com/?ref=7365869)  
+[Tell A Friend about Vultr and Earn up to $35 for referring clients!](https://www.vultr.com/?ref=9023177-8H)  
 
 ## 一些教程：
 
@@ -87,7 +88,3 @@ pc版喵拉同理，除了gui布局外交互逻辑完全一样
 0.0.3   贴纸更新贴吧，微博等；  
 0.0.2   贴纸更新eddie32佬的伪中国语和流行（直接使用eddie32源）；  
 0.0.1   替换失效贴纸，常用替换为小日向雪花，bilibili替换为林大B
-
-## 打赏
-如果你喜欢这个插件，可以打赏表示你对我更新本插件的支持，与资助云同步账号服务器/图床服务器的费用。
-![avatar](https://p.inari.site/mistakey/1658795551344.jpg)
