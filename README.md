@@ -2,6 +2,8 @@
 
 表情贴纸增强插件，理论上应该适用于绝大部分使用bbcode的编辑/回复为纯文本模式的论坛  
 
+[打赏]()
+
 ## 安装脚本
 
 [Github](https://github.com/HazukiKaguya/Stickers_PlusPlus/raw/master/Stickerspp.user.js)  
@@ -84,3 +86,5 @@ pc版喵拉同理，除了gui布局外交互逻辑完全一样
 0.0.3   贴纸更新贴吧，微博等；  
 0.0.2   贴纸更新eddie32佬的伪中国语和流行（直接使用eddie32源）；  
 0.0.1   替换失效贴纸，常用替换为小日向雪花，bilibili替换为林大B
+
+##打赏
