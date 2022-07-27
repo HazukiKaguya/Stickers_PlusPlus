@@ -19,7 +19,7 @@
 // @grant       GM_deleteValue
 // @run-at      document-end
 // @require     https://cdn.jsdelivr.net/npm/jquery@2.2.4/dist/jquery.min.js
-// @updateURL   https://github.com/HazukiKaguya/Stickers_PlusPlus/raw/master/Stickerspp.user.js
+// @updateURL   https://github.com/HazukiKaguya/Stickers_PlusPlus/raw/master/Stickersppg.user.js
 // ==/UserScript==
 // 特别感谢：eddie32 https://greasyfork.org/users/5415-eddie32 & 喵拉布丁 https://github.com/miaolapd
 // 本次更新日志：v1.42 代码重构，分离function，为下一个大版本的更新做准备，修复若干bugs。
