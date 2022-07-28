@@ -1,5 +1,8 @@
 # Stickers_PlusPlus  
-表情贴纸增强插件，理论上应该适用于绝大部分使用bbcode的编辑/回复为纯文本模式的论坛  
+表情贴纸增强插件，理论上适用于所有**存在纯文本编辑模式且支持BBcode并支持图片外链**的网站，目前      
+在**S1论坛**实测**纯文本编辑模式/PC版快捷回复**下兼容；  
+在**某两个论坛**实测**所有模式**均**完全正常**；  
+在**某两个论坛**实测**快捷回复/纯文本编辑模式**下兼容。   
 [更新记录](#%E6%9B%B4%E6%96%B0%E8%AE%B0%E5%BD%95)  
 
 ## 安装脚本  
@@ -11,21 +14,56 @@
 [Refer Vultr.com and earn $10 per paid signup](https://www.vultr.com/?ref=7365869)  
 [Tell A Friend about Vultr and Earn up to $35 for referring clients!](https://www.vultr.com/?ref=9023177-8H)  
 
+## 功能一览
+
+### 自由选择启用在线表情贴纸源
+
+![image](https://user-images.githubusercontent.com/35645329/181614422-8c38e8ee-3465-4ef7-8d2e-862c692230b8.png)
+
+### 自由选择启用本地贴纸源
+
+![image](https://user-images.githubusercontent.com/35645329/181614504-4e1f9011-c946-4d11-8048-1117ee52a4a8.png)
+
+### 自由增删改查自定义贴纸
+
+![image](https://user-images.githubusercontent.com/35645329/181614559-18989e99-3a28-49fc-812d-5168f9112ad1.png)
+
+### 随机表情贴纸
+
+![image](https://user-images.githubusercontent.com/35645329/181614666-0d15372e-8f5a-4141-9e64-962a0f9b1240.png)
+
+### 文本区域粘贴直接上传
+
+![image](https://user-images.githubusercontent.com/35645329/181614729-893c20a7-edee-4cbe-b0d1-dce57c435b60.png)
+
+### 自定义贴纸等配置云同步
+
+![image](https://user-images.githubusercontent.com/35645329/181615828-7b608d23-71ab-4b0c-857a-3907e97a4aa0.png)
+
+### 可随意拖动&更换的看板娘，且支持点击看板娘上传图片
+
+![image](https://user-images.githubusercontent.com/35645329/181615143-a205e0cf-369d-494f-85b4-1fe515002716.png)
+
+### 丰富的个性化设置
+
+![image](https://user-images.githubusercontent.com/35645329/181615281-cc308254-7539-4e86-839a-35d277af2e00.png)
+
+
 ## 一些教程：
 
 ### 云同步功能逻辑图解：
 ![avatar](https://p.inari.site/guest/22-07/03/62c15908556ee.png)   
 【云】按钮显然是云同步功能，【令】按钮是登录功能，因为云同步实现并使用了自己的一套用户系统。  
-![avatar](https://p.inari.site/guest/22-07/03/62c15a22a0652.png)
-![avatar](https://p.inari.site/guest/22-07/03/62c15cbda81ec.png)   
+![image](https://user-images.githubusercontent.com/35645329/181616175-8e7421f8-c8a4-4c97-8a54-7a4ac1df7700.png)   
+![image](https://user-images.githubusercontent.com/35645329/181616224-4fa77143-415e-4c40-aede-ba6b522d52a6.png)   
 未登录状态云同步提醒【未找到有效Token，请先登录！】  
 登录态过期云同步提醒【Token已失效，请重新登录！】  
-
-![avatar](https://p.inari.site/guest/22-07/03/62c15a573e8f1.png)
-![avatar](https://p.inari.site/guest/22-07/03/62c15a950f765.png)
-![avatar](https://p.inari.site/guest/22-07/03/62c15b18e982c.png)   
-注册与登录系统。   
-  
+**注册与登录系统。**   
+![image](https://user-images.githubusercontent.com/35645329/181616835-5ee3deb9-bfb4-4d51-92ef-c69f9125422f.png)  
+![image](https://user-images.githubusercontent.com/35645329/181617039-f939ac19-e857-4c28-8361-bddc4d38fb76.png)  
+![image](https://user-images.githubusercontent.com/35645329/181616930-1838e190-0f37-48ba-bd30-1f7087f8bdb2.png)  
+![image](https://user-images.githubusercontent.com/35645329/181616711-c3a1081e-187f-475b-a296-b77b4444e21e.png)    
+![image](https://user-images.githubusercontent.com/35645329/181616778-1eafda95-2e51-46cb-a969-e062f7dbd781.png)
 云同步功能浅显易懂就不多加介绍了。  
 
 
@@ -43,7 +81,8 @@
 pc版喵拉同理，除了gui布局外交互逻辑完全一样
 
 ## 更新记录
-1.4.0 增加在线表情商店，重写个性化设置逻辑，修复bugs  
+1.42    代码重构，分离function，为下一个大版本的更新做准备，修复若干bugs。
+1.4.0   增加在线表情商店，重写个性化设置逻辑，修复bugs  
 1.3.9   表情贴纸组数据源分离，大量操作逻辑重写。请注意，这是一个1.4.0版本的前置更新   
 1.3.0   更新点击看板娘上次图片，更新看板娘可拖拽   
 1.2.0   fix some bugs   
