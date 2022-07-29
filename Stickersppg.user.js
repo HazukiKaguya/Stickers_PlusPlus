@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        表情贴纸增强插件
 // @namespace   https://github.com/HazukiKaguya/Stickers_PlusPlus
-// @version     1.42
+// @version     1.99
 // @author      HazukiKaguya
 // @description 回复表情，插图扩展插件，在发帖时快速输入自定义表情和论坛BBCODE
 // @icon        https://sticker.inari.site/favicon.ico
@@ -18,49 +18,49 @@
 // @grant       GM_setValue
 // @grant       GM_deleteValue
 // @run-at      document-end
+// @license     MIT License
 // @require     https://cdn.jsdelivr.net/npm/jquery@2.2.4/dist/jquery.min.js
 // @updateURL   https://github.com/HazukiKaguya/Stickers_PlusPlus/raw/master/Stickersppg.user.js
 // ==/UserScript==
 // 特别感谢：eddie32 https://greasyfork.org/users/5415-eddie32 & 喵拉布丁 https://github.com/miaolapd
-// 本次更新日志：v1.42 代码重构，分离function，为下一个大版本的更新做准备，修复若干bugs。
-// 历史更新日志：https://github.com/HazukiKaguya/Stickers_PlusPlus#%E6%9B%B4%E6%96%B0%E8%AE%B0%E5%BD%95
+// 更新日志：https://github.com/HazukiKaguya/Stickers_PlusPlus#%E6%9B%B4%E6%96%B0%E8%AE%B0%E5%BD%95
 
 
 /**
  * 各种设置
  */
- 'use strict';
+'use strict';
 // jQuery隔离
 this.$ = this.jQuery = jQuery.noConflict(true);
 // 网站是否为KF
-const check = ["kf", "365gal", "miaola", "bakabbs", "9shenmi"];let isKF = false,KFstyle="";
-for (let i = 0; i < check.length; i++) { if (window.location.href.indexOf(check[i]) > -1) { isKF = true; KFstyle='style="display:none"';break; } }
+const check = ["kf", "365gal", "miaola", "bakabbs", "9shenmi"]; let isKF = false, KFstyle = "";
+for (let i = 0; i < check.length; i++) { if (window.location.href.indexOf(check[i]) > -1) { isKF = true; KFstyle = 'style="display:none"'; break; } }
 // 网站是否为Mobile
 const isKfMobile = typeof Info !== 'undefined' && typeof Info.imgPath !== 'undefined';
 // 是否为移动端页面
-const mbcheck = ["&mobile=2","/simple/"];let sMobile = false;
-for (let i = 0; i < mbcheck.length; i++) { if (window.location.href.indexOf(mbcheck[i]) > -1) { sMobile = true;break; } }
-const isMobile=sMobile;
+const mbcheck = ["&mobile=2", "/simple/"]; let sMobile = false;
+for (let i = 0; i < mbcheck.length; i++) { if (window.location.href.indexOf(mbcheck[i]) > -1) { sMobile = true; break; } }
+const isMobile = sMobile;
 // 默认配置&载入个性化配置
 const defaultSConf = {
-    "version": "1.42",
+    "version": "1.99",
     "kanbansize": "64",
     "kanbanimg": "https://sticker.inari.site/truenight.gif",
     "imgapi": "https://up.inari.site/api/v1/",
     "cloudapi": "https://api.inari.site/?s=App.User.",
     "onlineraw": "https://api.inari.site/?s=App.Sticker.",
     "notauthed": false,
-    "UseOldNum": false,
+    "markdown": false,
     "lcimglists": false,
     "olimglists": []
 };
-let loadcustom = true, customze;
+let loadcustom = true, customize;
 if (!localStorage.StickerConf) { loadcustom = false; customize = defaultSConf; }
 else { customize = JSON.parse(localStorage.StickerConf); }
 if (loadcustom == false) {
     localStorage.setItem('StickerConf', JSON.stringify(defaultSConf));
 }
-else if(customize.version != defaultSConf.version){
+else if (customize.version != defaultSConf.version) {
     console.log("个性化配置版本不匹配，自动进行兼容性变更！");
     customize.version = defaultSConf.version;
     if (!customize.kanbanimg) customized.kanbanimg = defaultSConf.kanbanimg;
@@ -69,11 +69,11 @@ else if(customize.version != defaultSConf.version){
     if (!customize.cloudapi) customize.cloudapi = defaultSConf.cloudapi;
     if (!customize.onlineraw) customize.onlineraw = defaultSConf.onlineraw;
     if (!customize.notauthed) customize.notauthed = defaultSConf.notauthed;
-    if (!customize.UseOldNum) customize.UseOldNum = defaultSConf.UseOldNum;
+    if (!customize.markdown) customize.markdown = defaultSConf.markdown;
     if (!customize.lcimglists) customize.lcimglists = defaultSConf.lcimglists;
     if (!customize.olimglists) customize.olimglists = defaultSConf.olimglists;
     localStorage.setItem('StickerConf', JSON.stringify(customize));
-    localStorage.removeItem('onlineraws');localStorage.removeItem('Alertless');sessionStorage.removeItem('localSmile');sessionStorage.removeItem('OnlineSmile');
+    localStorage.removeItem('onlineraws'); localStorage.removeItem('Alertless'); sessionStorage.removeItem('localSmile'); sessionStorage.removeItem('OnlineSmile');
     console.log("兼容性变更完成！");
 }
 const imgapi = customize.imgapi, cloudapi = customize.cloudapi;
@@ -91,7 +91,7 @@ let LocalRaws = [
     { "id": 10, "desc": "BanG Dream！噜~ キラキラ☆ドキドキ~ ふえぇ~", "cover": "https://sticker.inari.site/bangdream/bangdream (1).png", "name": "_Bandori", "title": '邦邦', "addr": "_BandoriSmileList", "numstart": [1], "numend": [41], "url1": ["https://sticker.inari.site/bangdream/bangdream ("], "url2": [").png"] },
 ];
 !localStorage.onlineraws ? OnlineRaws = [] : OnlineRaws = JSON.parse(localStorage.onlineraws);
-const FinalList = [],FinalRaw=[];
+const FinalList = [], FinalRaw = [];
 // 实验性功能，此储存桶地址的表情贴纸很可能和修复后的表情贴纸并不能一一对应。
 let x = document.getElementsByTagName("img"); let afdDate = new Date();
 for (let i = 0; i < x.length; i++) {
@@ -111,13 +111,14 @@ document.body.querySelectorAll('.readtext a').forEach(i => {
 });
 // 复用字符串
 const
-notbindText = "图片上传将使用游客上传！已登录，现在你可以进行同步操作了！",
-lengtherrText = "长度不合规，位数应在以下范围内：",
-imguperrText = "图片上传失败，可能是网络原因。",
-guestupimgText = "游客上传成功！建议绑定up.inari.site图床账号到云同步账号！",
-kanbanerrText = "当前存在多个文本区，无法确认上传区域，看板娘点击上传暂不可用！",
-resText="已重置，请刷新！"
-;
+    notbindText = "图片上传将使用游客上传！已登录，现在你可以进行同步操作了！",
+    lengtherrText = "长度不合规，位数应在以下范围内：",
+    imguperrText = "图片上传失败，可能是网络原因。",
+    guestupimgText = "游客上传成功！建议绑定up.inari.site图床账号到云同步账号！",
+    kanbanerrText = "当前存在多个文本区，无法确认上传区域，看板娘点击上传暂不可用！",
+    resText = "已重置，请刷新！",
+    updatelog = 'V1.99 : 支持所见即所得模式下插入表情，支持markdown语法，修复若干bug。'
+    ;
 
 
 /**
@@ -130,29 +131,26 @@ if (isKF) {
     if (isKfMobile) kfImgPath = Info.imgPath; for (let i = 1; i < 49; i++) {
         KfSmileList.push(`/${kfImgPath}/post/smile/em/em${(i) > 9 ? i : ('0' + i)}.gif`); KfSmileCodeList.push(`[s:${i + 9}]`);
     }
-}
-else {
-    for (let i = 1; i < 49; i++) {
-        KfSmileList.push(`https://sticker.inari.site/pesoguin/em${i}.gif`);
-        KfSmileCodeList.push(`[img]https://sticker.inari.site/pesoguin/em${i}.gif[/img]`);
+    for (let i = 1; i < 204; i++) {
+        KfSmileList.push(`https://sticker.inari.site/pesoguin/${i}.gif`);
+        KfSmileCodeList.push(`[img]https://sticker.inari.site/pesoguin/${i}.gif[/img]`);
     }
 }
-for (let i = 1; i < 204; i++) {
-    KfSmileList.push(`https://sticker.inari.site/pesoguin/${i}.gif`);
-    KfSmileCodeList.push(`[img]https://sticker.inari.site/pesoguin/${i}.gif[/img]`);
+else {
+    for (let i = 1; i < 49; i++) { KfSmileList.push(`https://sticker.inari.site/pesoguin/em${i}.gif`); }
+    for (let i = 1; i < 204; i++) { KfSmileList.push(`https://sticker.inari.site/pesoguin/${i}.gif`); }
 }
 // 随机
 const RandomSmileList = []; RandomSmileList.push(`https://sticker.inari.site/yukika/${Math.ceil(Math.random() * 6)}.jpg`);
 for (let i = 0; i < 29; i++) { RandomSmileList.push(`https://sticker.inari.site/rwebp/${Math.ceil(Math.random() * 6930)}.webp`); }
 for (let i = 1; i < 10; i++) { RandomSmileList.push(`https://sticker.inari.site/rgif/${Math.ceil(Math.random() * 2555)}.gif`); }
 // 自定义
-!localStorage.userimgst? userimgst = `["https://sticker.inari.site/null.jpg"]` : userimgst = localStorage.userimgst;
+!localStorage.userimgst ? userimgst = `["https://sticker.inari.site/null.jpg"]` : userimgst = localStorage.userimgst;
 const UserSmileList = JSON.parse(userimgst); const UsersSmileList = [];
-if (customize.UseOldNum == true) { for (let i = 0; i < UserSmileList.length; i++) { UsersSmileList.push(`${UserSmileList[i]}?num=${i + 1}`); } }
-else { for (let i = 0; i < UserSmileList.length; i++) { UsersSmileList.push(`${UserSmileList[i]}#num=${i + 1}`); } }
+for (let i = 0; i < UserSmileList.length; i++) { UsersSmileList.push(`${UserSmileList[i]}#num=${i + 1}`); }
 // 来自本地数据源的表情贴纸
 let locAuth = sessionStorage.localSmile, localSmile = [];
-!customize.lcimglists? loconsticker = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] : loconsticker = customize.lcimglists;
+!customize.lcimglists ? loconsticker = [] : loconsticker = customize.lcimglists;
 for (let t = 0; t < loconsticker.length; t++) { localSmile[t] = LocalRaws[loconsticker[t]]; }
 if (locAuth == null) {
     for (let t = 0; t < localSmile.length; t++) {
@@ -183,42 +181,69 @@ OnlineSmile = JSON.parse(sessionStorage.OnlineSmile)
 
 /**
  * 表情菜单
- */
-const MenuList = {
-    KfSmile: { datatype: 'imageLink', title: '小企鹅', desc: 'KF论坛的小企鹅表情', addr: KfSmileList, ref: KfSmileCodeList },
-    Shortcut: {
-        datatype: 'plain',
-        title: '快捷',
-        desc: '发帖实用BBcode',
+*/
+const MenuList = {}
+if (isKF) {
+    MenuList['KfSmile'] = { datatype: 'imageLink', title: '小企鹅', desc: 'KF论坛的小企鹅表情', addr: KfSmileList, ref: KfSmileCodeList };
+    MenuList['Shortcut'] = {
+        datatype: 'plain', title: '快捷', desc: '发帖实用BBcode',
         addr: [
-            '[sell=100][/sell]', '[quote][/quote]', '[hide=100][/hide]', '[code][/code]', '[strike][/strike]', '[fly][/fly]', '[color=#00FF00][/color]',
-            '[b][/b]', '[u][/u]', '[i][/i]', '[hr]', '[backcolor=][/backcolor]', '[url=][/url]', '[img][/img]', '[table][/table]', '[tr][/tr]', '[td][/td]',
+            '[sell=100][/sell]', '[quote][/quote]', '[backcolor=#000][color=#000]在此输入[/color][/backcolor]', '[hide=100][/hide]', '[code][/code]', '[strike][/strike]', '[fly][/fly]', '[color=#00FF00][/color]',
+            '[b][/b]', '[u][/u]', '[i][/i]', '[hr]', '[backcolor=][/backcolor]', '[url=][/url]', '[img][/img]', '[url=][img][/img][/url]', '[table][/table]', '[tr][/tr]', '[td][/td]',
             '[align=left][/align]', '[align=center][/align]', '[align=right][/align]', '[audio][/audio]', '[video][/video]', '[email][/email]', '[list][/list]',
             '[/align]这里是签名档内容，可以随意修改，支持bbcode，实验性功能，喵拉手机版不显示，编辑帖子后如果有修改说明会导致喵拉手机版重复显示两次内容。',
-            '[align=center][img]此处替换为自定义图片url[/img][/align][align=center][backcolor=#FFFFFF][size=3]  [b]在此输入自定义文字[/b]  [/size][/backcolor][/align]'
+            '[align=center][img]此处替换为自定义图片url[/img][/align][align=center][backcolor=#FFF][size=3]  [b]在此输入自定义文字[/b]  [/size][/backcolor][/align]'
         ],
         ref: [
-            '出售贴sell=售价', '引用', '隐藏hide=神秘等级', '插入代码', '删除线', '跑马灯', '文字颜色', '粗体', '下划线', '斜体', '水平线', '背景色', '插入链接',
-            '插入图片', '插入表格', '插入表格行', '插入表格列', '左对齐', '居中', '右对齐', '插入音频', '插入视频', 'Email', '插入列表', '签名档[实验性功能]', '自定义表情配文字'
+            '出售贴sell=售价', '引用', '隐藏(黑条)', '隐藏hide=神秘等级', '插入代码', '删除线', '跑马灯', '文字颜色', '粗体', '下划线', '斜体', '水平线', '背景色', '插入链接',
+            '插入图片', '插入超链接图片', '插入表格', '插入表格行', '插入表格列', '左对齐', '居中', '右对齐', '插入音频', '插入视频', 'Email', '插入列表', '签名档[实验性功能]', '自定义表情配文字'
         ]
-    },
-    Random: { datatype: 'image', title: '随机', desc: '从随机表情贴纸池里随机抽取表情贴纸！', addr: RandomSmileList },
-    Userimg: { datatype: 'image', title: '自定义', desc: '你自己新增的表情贴纸都在这里！', addr: UsersSmileList },
-    Kaomoji: {
-        datatype: 'plain',
-        title: ':)',
-        desc: '颜文字',
-        addr: [
-            '(●・ 8 ・●)', '╰(๑◕ ▽ ◕๑)╯', '(ゝω・)', '〜♪♪', '(ﾟДﾟ≡ﾟДﾟ)', '(＾o＾)ﾉ', '(|||ﾟДﾟ)', '(`ε´ )', '(╬ﾟдﾟ)', '(|||ﾟдﾟ)', '(￣∇￣)', '(￣3￣)', '(￣ｰ￣)',
-            '(￣ . ￣)', '(￣︿￣)', '(￣︶￣)', '(*´ω`*)', '(・ω・)', '(⌒▽⌒)', '(￣▽￣）', '(=・ω・=)', '(･∀･)', '(｀・ω・´)', '(〜￣△￣)〜', '(°∀°)ﾉ', '(￣3￣)',
-            '╮(￣▽￣)╭', '( ´_ゝ｀)', 'のヮの', '(ﾉ؂< ๑）诶嘿☆～', '(<_<)', '(>_>)', '(;¬_¬)', '(▔□▔)/', '(ﾟДﾟ≡ﾟдﾟ)!?', 'Σ(ﾟдﾟ;)', 'Σ( ￣□￣||)', '(´；ω；`)',
-            '（/TДT)/', '(^・ω・^ )', '(｡･ω･｡)', '(oﾟωﾟo)', '(●￣(ｴ)￣●)', 'ε=ε=(ノ≧∇≦)ノ', '(´･_･`)', '(-_-#)', '（￣へ￣）', '(￣ε(#￣) Σ', 'ヽ(`Д´)ﾉ', '( ´ρ`)',
-            '(╯°口°)╯(┴—┴', '（#-_-)┯━┯', '_(:3」∠)_', '(笑)', '(汗)', '(泣)', '(苦笑)', '(´・ω・`)', '(╯°□°）╯︵ ┻━┻', '(╯‵□′)╯︵┻━┻', '( ﾟωﾟ)',
-            '(　^ω^)', '(｡◕∀◕｡)', '/( ◕‿‿◕ )\\', 'ε٩( º∀º )۶з', '(￣ε(#￣)☆╰╮(￣▽￣///)', '（●´3｀）~♪', '_(:з」∠)_', 'хорошо!', '＼(^o^)／', '(•̅灬•̅ )',
-            '(ﾟДﾟ)', '(；°ほ°)', 'ε=ε=ε=┏(゜ロ゜;)┛', '⎝≧⏝⏝≦⎠', 'ヽ(✿ﾟ▽ﾟ)ノ', '|•ω•`)', '小学生は最高だぜ！！', '焔に舞い上がるスパークよ、邪悪な異性交際に、天罰を与え！'
-        ]
-    },
+    };
 }
+else if (!isKF) {
+    MenuList['KfSmile'] = { datatype: 'image', title: '小企鹅', desc: 'KF论坛的小企鹅表情', addr: KfSmileList };
+    MenuList['Shortcut'] = {
+        datatype: 'plain', title: 'BBcode', desc: '发帖实用BBcode',
+        addr: [
+            '[sell=100][/sell]', '[quote][/quote]', '[backcolor=#000][color=#000]在此输入[/color][/backcolor]', '[hide=100][/hide]', '[code][/code]', '[strike][/strike]', '[fly][/fly]', '[color=#00FF00][/color]',
+            '[b][/b]', '[u][/u]', '[i][/i]', '[hr]', '[backcolor=][/backcolor]', '[url=][/url]', '[img][/img]', '[url=][img][/img][/url]', '[table][/table]', '[tr][/tr]', '[td][/td]',
+            '[align=left][/align]', '[align=center][/align]', '[align=right][/align]', '[audio][/audio]', '[flash=audio][/flash]', '[video][/video]', '[media][/media]', '[flash][/flash]', '[email][/email]', '[list][/list]', '[font=字体名]文字[/font]', '[collapse=文字]需要折叠的内容[/collapse]', '[dice]d楼层数[/dice]', '[@用户名]or[@用户ID]'
+        ],
+        ref: [
+            '出售贴sell=售价', '引用', '隐藏(黑条)', '隐藏(hide=)', '插入代码', '删除线', 'Fly', '文字颜色', '粗体', '下划线', '斜体', '水平线', '背景色', '插入链接',
+            '插入图片', '插入超链接图片', '插入表格框', '插入表格行', '插入表格列', '左对齐', '居中', '右对齐', '插入音频', '插入flash音频', '插入视频[video]', '插入视频[media]', '插入flash', 'Email', '插入列表', '字体', '折叠', 'ngaRoll点', 'nga@用户'
+        ]
+    };
+};
+
+MenuList['Markdown'] = {
+    datatype: 'code', title: 'M↓', desc: 'Markdown语法，如需全局更换为markdown请前往【自定义】-》【个性设置】，勾选【使用Markdown取代BBcode】',
+    addr: [
+        '>  ', '**', '****', '---', '~~~~', '<u></u>', '``', '[]()', '![]()', '#  '
+    ],
+    haddr: [
+        '> ', '<em></em>', '****', '---', '~~~~', '<u></u>', '``', '[]()', '![]()', '#  '
+    ],
+    ref: [
+        '引用', '斜体', '粗体', '分割线', '删除线', '下划线', '代码', '链接', '图片', '标题'
+    ]
+};
+MenuList['Random'] = { datatype: 'image', title: '随机', desc: '从随机表情贴纸池里随机抽取表情贴纸！', addr: RandomSmileList },
+    MenuList['Userimg'] = { datatype: 'image', title: '自定义', desc: '你自己新增的表情贴纸都在这里！', addr: UsersSmileList };
+MenuList['Kaomoji'] = {
+    datatype: 'plain',
+    title: ':)',
+    desc: '颜文字',
+    addr: [
+        '(●・ 8 ・●)', '╰(๑◕ ▽ ◕๑)╯', '(ゝω・)', '〜♪♪', '(ﾟДﾟ≡ﾟДﾟ)', '(＾o＾)ﾉ', '(|||ﾟДﾟ)', '(`ε´ )', '(╬ﾟдﾟ)', '(|||ﾟдﾟ)', '(￣∇￣)', '(￣3￣)', '(￣ｰ￣)',
+        '(￣ . ￣)', '(￣︿￣)', '(￣︶￣)', '(*´ω`*)', '(・ω・)', '(⌒▽⌒)', '(￣▽￣）', '(=・ω・=)', '(･∀･)', '(｀・ω・´)', '(〜￣△￣)〜', '(°∀°)ﾉ', '(￣3￣)',
+        '╮(￣▽￣)╭', '( ´_ゝ｀)', 'のヮの', '(ﾉ؂< ๑）诶嘿☆～', '(<_<)', '(>_>)', '(;¬_¬)', '(▔□▔)/', '(ﾟДﾟ≡ﾟдﾟ)!?', 'Σ(ﾟдﾟ;)', 'Σ( ￣□￣||)', '(´；ω；`)',
+        '（/TДT)/', '(^・ω・^ )', '(｡･ω･｡)', '(oﾟωﾟo)', '(●￣(ｴ)￣●)', 'ε=ε=(ノ≧∇≦)ノ', '(´･_･`)', '(-_-#)', '（￣へ￣）', '(￣ε(#￣) Σ', 'ヽ(`Д´)ﾉ', '( ´ρ`)',
+        '(╯°口°)╯(┴—┴', '（#-_-)┯━┯', '_(:3」∠)_', '(笑)', '(汗)', '(泣)', '(苦笑)', '(´・ω・`)', '(╯°□°）╯︵ ┻━┻', '(╯‵□′)╯︵┻━┻', '( ﾟωﾟ)',
+        '(　^ω^)', '(｡◕∀◕｡)', '/( ◕‿‿◕ )\\', 'ε٩( º∀º )۶з', '(￣ε(#￣)☆╰╮(￣▽￣///)', '（●´3｀）~♪', '_(:з」∠)_', 'хорошо!', '＼(^o^)／', '(•̅灬•̅ )',
+        '(ﾟДﾟ)', '(；°ほ°)', 'ε=ε=ε=┏(゜ロ゜;)┛', '⎝≧⏝⏝≦⎠', 'ヽ(✿ﾟ▽ﾟ)ノ', '|•ω•`)', '小学生は最高だぜ！！', '焔に舞い上がるスパークよ、邪悪な異性交際に、天罰を与え！'
+    ]
+};
 for (let s = 0; s < localSmile.length; s++) { MenuList[`${localSmile[s].name}`] = { datatype: 'image', title: localSmile[s].title, desc: localSmile[s].desc, addr: localSmile[s].addr }; }
 for (let s = 0; s < OnlineSmile.length; s++) { MenuList[`${OnlineSmile[s].name}`] = { datatype: 'image', title: OnlineSmile[s].title, desc: OnlineSmile[s].desc, addr: OnlineSmile[s].addr }; }
 
@@ -230,15 +255,50 @@ for (let s = 0; s < OnlineSmile.length; s++) { MenuList[`${OnlineSmile[s].name}`
  * @param {string} selText 选择文本
  */
 const addCode = function (textArea, code, selText = '') {
-    let startPos = !selText ? (code.indexOf('[img]') > -1 || code.indexOf(']') < 0 ? code.length : code.indexOf(']') + 1) : code.indexOf(selText);
+    let startPos;
+    if (customize.markdown == false) {
+        startPos = !selText ? (code.indexOf('[img]') > -1 || code.indexOf(']') < 0 ? code.length : code.indexOf(']') + 1) : code.indexOf(selText);
+    }
+    else if (customize.markdown == true) {
+        startPos = !selText ? (code.indexOf('[]') > -1 && code.length < 10 ? code.length - 1 : (code.indexOf('*') > -1 || code.indexOf('`') > -1 || code.indexOf('<') > -1 || code.indexOf('~') > -1 ? Math.floor(code.length / 2) : code.length)) : code.indexOf(selText);
+    }
     if (typeof textArea.selectionStart !== 'undefined') {
         let prePos = textArea.selectionStart;
         textArea.value = textArea.value.substring(0, prePos) + code + textArea.value.substring(textArea.selectionEnd);
         textArea.selectionStart = prePos + startPos;
         textArea.selectionEnd = prePos + startPos + selText.length;
+        if ($('#spp-reply-textarea').length > 0) {
+            let textArea2 = $('#spp-reply-textarea')[0], prePos = textArea2.selectionStart;
+            textArea2.value = textArea2.value.substring(0, prePos) + code + textArea2.value.substring(textArea2.selectionEnd);
+            textArea2.selectionStart = prePos + startPos;
+            textArea2.selectionEnd = prePos + startPos + selText.length;
+        }
     }
     else {
         textArea.value += code;
+        if ($('#spp-reply-textarea').length > 0) { $('#spp-reply-textarea')[0].value += code; }
+    }
+};
+
+
+/**
+ * 添加Html文本
+ * @param {string} code Html文本
+ */
+const addHCode = function (code) {
+    if (rhview == true) {
+        let target1 = document.createTextNode("\u0001");
+        $realtimeView[0].contentWindow.document.getSelection().getRangeAt(0).insertNode(target1);
+        let position = $realtimeView[0].contentWindow.document.body.innerHTML.indexOf("\u0001");
+        target1.parentNode.removeChild(target1);
+        if (position > 0) {
+            let target = $realtimeView[0].contentWindow.document.createElement("nobr");
+            target.innerHTML = code;
+            $realtimeView[0].contentWindow.document.getSelection().getRangeAt(0).insertNode(target);
+        }
+        else {
+            $realtimeView[0].contentWindow.document.body.innerHTML += code;
+        }
     }
 };
 
@@ -250,7 +310,7 @@ const addCode = function (textArea, code, selText = '') {
 const showZoomInImage = function ($img) {
     if ($img.get(0).naturalWidth <= $img.height()) return;
     let offset = $img.offset();
-    let $zoomIn = $(`<img class="spp-zoom-in" src="${$img.attr('src')}" alt="[预览图片]">`).appendTo('body');
+    let $zoomIn = $(`<img class="stickerpp-zoom-in" src="${$img.attr('src')}" alt="[预览图片]">`).appendTo('body');
     let windowWidth = $(window).width();
     let zoomInWidth = $zoomIn.outerWidth();
     let top = offset.top - $zoomIn.outerHeight() - 5;
@@ -272,18 +332,22 @@ const getSmilePanelHtml = function (key) {
     let html = '';
     for (let i = 0; i < data.addr.length; i++) {
         if (data.datatype === 'image') {
-            html += `<img class="spp-smile" src="${data.addr[i]}" alt="[表情]">`;
+            html += `<img class="stickerpp-smile" src="${data.addr[i]}" alt="[表情]">`;
         }
         else if (data.datatype === 'imageLink') {
             let ref = typeof data.ref !== 'undefined' && typeof data.ref[i] !== 'undefined' ? data.ref[i] : '';
-            html += `<img class="spp-smile" data-code="${ref}" src="${data.addr[i]}" alt="[表情]">`;
+            html += `<img class="stickerpp-smile" data-code="${ref}" src="${data.addr[i]}" alt="[表情]">`;
         }
         else if (data.datatype === 'plain') {
             let ref = typeof data.ref !== 'undefined' && typeof data.ref[i] !== 'undefined' ? data.ref[i] : data.addr[i];
-            html += `<a class="spp-smile-text" data-code="${data.addr[i]}" href="#">${ref}</a>`;
+            html += `<a class="stickerpp-smile-text" data-code="${data.addr[i]}"  href="#">${ref}</a>`;
+        }
+        else if (data.datatype === 'code') {
+            let ref = typeof data.ref !== 'undefined' && typeof data.ref[i] !== 'undefined' ? data.ref[i] : data.addr[i];
+            html += `<a class="stickerpp-smile-text" data-code="${data.addr[i]}"  data-hcode="${data.haddr[i]}"  href="#">${ref}</a>`;
         }
     }
-    return `<div class="spp-smile-panel" data-key="${key}">${html}</div>`;
+    return `<div class="stickerpp-smile-panel" data-key="${key}">${html}</div>`;
 };
 
 
@@ -294,7 +358,7 @@ const getSmilePanelHtml = function (key) {
 const getSubMenuHtml = function () {
     let html = '';
     $.each(MenuList, function (key, data) {
-        html += `<a class="spp-sub-menu" data-key="${key}" href="#" title="${data.desc}">${data.title}</a>`;
+        html += `<a class="stickerpp-sub-menu" data-key="${key}" href="#" title="${data.desc}">${data.title}</a>`;
     });
     return html;
 };
@@ -303,57 +367,58 @@ const getSubMenuHtml = function () {
 /**
  * 创建容器
  * @param textArea 文本框
+ * @param qufen 区分不同文本区域
  */
 // 看板娘
-let imgpreview = document.createElement("div");
-if (isKfMobile == true||isMobile==true) {
-    imgpreview.innerHTML = `<div id = "imgpreview" style = "position:fixed;left:5px;top:300px;z-index:88;cursor:pointer;" >
- <img class="imgpreview" src = ${customize.kanbanimg} width ="32%"} height ="32%"}></div>`;
+let stickerppkanban = document.createElement("div");
+if (isKfMobile == true || isMobile == true) {
+    stickerppkanban.innerHTML = `<div id = "stickerppkanban" style = "position:fixed;left:5px;top:300px;z-index:88;cursor:pointer;" >
+ <img class="stickerppkanban" src = ${customize.kanbanimg} width ="32%"} height ="32%"}></div>`;
 }
 else {
     if (localStorage.imgpvpc != null) {
         let imgpvpc = localStorage.imgpvpc; let imgpvpcpush = JSON.parse(imgpvpc);
-        imgpreview.innerHTML = `<div id = "imgpreview" style = "position:fixed;left:${imgpvpcpush[0]};top:${imgpvpcpush[1]};z-index:88;cursor:pointer;" >
- <img class="imgpreview" src = ${customize.kanbanimg} width =${customize.kanbansize + "%"} height =${customize.kanbansize + "%"}></div>`;
+        stickerppkanban.innerHTML = `<div id = "stickerppkanban" style = "position:fixed;left:${imgpvpcpush[0]};top:${imgpvpcpush[1]};z-index:88;cursor:pointer;" >
+ <img class="stickerppkanban" src = ${customize.kanbanimg} width =${customize.kanbansize + "%"} height =${customize.kanbansize + "%"}></div>`;
     }
     else {
-        imgpreview.innerHTML = `<div id = "imgpreview" style = "position:fixed;left:5px;top:40px;z-index:88;cursor:pointer;" >
- <img class="imgpreview" src = ${customize.kanbanimg} width =${customize.kanbansize + "%"} height =${customize.kanbansize + "%"}></div>`;
+        stickerppkanban.innerHTML = `<div id = "stickerppkanban" style = "position:fixed;left:5px;top:40px;z-index:88;cursor:pointer;" >
+ <img class="stickerppkanban" src = ${customize.kanbanimg} width =${customize.kanbansize + "%"} height =${customize.kanbansize + "%"}></div>`;
     }
-} document.body.appendChild(imgpreview);
-let imgpv = document.getElementById("imgpreview"); window.onload = function () { drag(imgpv); };
+} document.body.appendChild(stickerppkanban);
+let imgpv = document.getElementById("stickerppkanban"); window.onload = function () { drag(imgpv); };
 // 表情商店相关
-const SppDialogHtml = `
+const StickerPPDialogHtml = `
 <form>
-<div class="spp-shop_box" id="Spp-shop-dialog" style="display: block; top: 8px; left: 336px;">
+<div class="stickerpp-shop_box" id="StickerPP-shop-dialog" style="display: block; top: 8px; left: 336px;">
   <sheader><logo>&nbsp;&nbsp;&nbsp;表情贴纸商店 | Sticker Shop</logo>
-    <span class="spp-close-shop">×&nbsp;&nbsp;</span></sheader>
-    <div class="spp-shop_main" ><br>
-    <div class="Spp-list-content"></div>
+    <span class="stickerpp-close-shop">×&nbsp;&nbsp;</span></sheader>
+    <div class="stickerpp-shop_main" ><br>
+    <div class="StickerPP-list-content"></div>
 </div>
 <div class="pd_cfg_btns"></div>
-<div class="sticker-pages"><div class="Spp-list-pagination"></div></div>
-<div class="spp-shop_footer">
+<div class="sticker-pages"><div class="StickerPP-list-pagination"></div></div>
+<div class="stickerpp-shop_footer">
     <a target="_blank" href="https://stickers.inari.site/terms">Terms Of Service/服务条款</a> | <a target="_blank" href="https://stickers.inari.site/rules">Privacy Policy/隐私策略</a> | <a target="_blank" href="https://stickers.inari.site/qa">Q&A/常见问题</a> |
     ©mistakey&nbsp;&nbsp;
   </div></div></form>
 `;
-const SppItemHtml = `
+const StickerPPItemHtml = `
 <div class="sticker-item">
 <div class="sticker-item-img"><img style="width: 50px; height: 50px;"/></div>
 <div class="sticker-item-name"></div>
 </div>
 `;
-const SppPaginationItemHtml = `
-<div class="Spp-pagination-item-button"></div>
+const StickerPPPaginationItemHtml = `
+<div class="StickerPP-pagination-item-button"></div>
 `;
-const SppNowPageHtml = `
-<div class="Spp-pagination-nowpage-button"></div>
+const StickerPPNowPageHtml = `
+<div class="StickerPP-pagination-nowpage-button"></div>
 `;
 const prevNextPageHtml = `
-<div class="Spp-pagination-prev-next"></div>
+<div class="StickerPP-pagination-prev-next"></div>
 `;
-$(document).on("click", "#Spp-shop-dialog .sticker-item", function (e) {
+$(document).on("click", "#StickerPP-shop-dialog .sticker-item", function (e) {
     let selctedid = $(e.target).parents(".sticker-item").data("id"), selctedtext = JSON.parse($(e.target).parents(".sticker-item").data("content"));
     localStorage.onlineraws ? OnlineRawslists = JSON.parse(localStorage.onlineraws) : OnlineRawslists = [];
     OnlineRawslists == [] ? olhaved = false : olhaved = OnlineRawslists.some(o => o.id === selctedid);
@@ -375,58 +440,58 @@ $(document).on("click", "#Spp-shop-dialog .sticker-item", function (e) {
             sessionStorage.removeItem('OnlineSmile')
         } else { alert("停用操作取消") }
     }
-}).on("click", "#Spp-shop-dialog .Spp-pagination-item-button", function (e) {
-    $(document).find('.spp-shop_box').hide();
-    let $dialog = $("#Spp-shop-dialog")[0];
-    $("body").append(SppDialogHtml);
-    SppLoadSticker($(e.target).data("id"));
-}).on("click", "#Spp-shop-dialog .Spp-pagination-prev-next", function (e) {
-    $(document).find('.spp-shop_box').hide();
-    let $dialog = $("#Spp-shop-dialog")[0];
-    $("body").append(SppDialogHtml);
-    SppLoadSticker($(e.target).data("id"));
-}).on('click', '.spp-close-shop', function (e) {
-    $(document).find('.spp-shop_box').hide();
+}).on("click", "#StickerPP-shop-dialog .StickerPP-pagination-item-button", function (e) {
+    $(document).find('.stickerpp-shop_box').hide();
+    let $dialog = $("#StickerPP-shop-dialog")[0];
+    $("body").append(StickerPPDialogHtml);
+    StickerPPLoadSticker($(e.target).data("id"));
+}).on("click", "#StickerPP-shop-dialog .StickerPP-pagination-prev-next", function (e) {
+    $(document).find('.stickerpp-shop_box').hide();
+    let $dialog = $("#StickerPP-shop-dialog")[0];
+    $("body").append(StickerPPDialogHtml);
+    StickerPPLoadSticker($(e.target).data("id"));
+}).on('click', '.stickerpp-close-shop', function (e) {
+    $(document).find('.stickerpp-shop_box').hide();
 });
 // 表情菜单
-const createContainer = function (textArea,qufen) {
-    let $container = $(`<div class="spp-container"><div class="spp-menu">
-    <input type= "file"  class="spp-user-p" id="spp-user-p${qufen}" accept="image/*" style="display:none" >
-    <input type="button" class="spp-user-t" value="上传图片" ${KFstyle}>
-    <input type="button" class="spp-user-y" value="云同步">
-    <input type="button" class="spp-user-i" value="自定义">
-    <input type="button" class="spp-user-g" value="表情组设置">&nbsp;
-    <span class="spp-close-panel" title="版本${defaultSConf.version}; 本分支由mistakey维护，是eddie32插件喵拉布丁分支的分支" style="cursor: pointer;"><b>⑨</b></span>
-    ${getSubMenuHtml()}<span class="spp-close-panel">[-]</span>&nbsp;
-    <div class="spp-diy-panel" style="display:none">
-    <input type="button" class="spp-user-c" value="添加贴纸">&nbsp;
-    <input type="button" class="spp-user-r" value="导出贴纸">&nbsp;
-    <input type="button" class="spp-user-u" value="修改贴纸">&nbsp;
-    <input type="button" class="spp-user-d" value="删除贴纸">&nbsp;
-    <input type="button" class="spp-user-cfg" value="个性设置">
-    <div class="spp-conf-panel" style="display:none">
+const createContainer = function (textArea, qufen) {
+    let $container = $(`<div class="stickerpp-container"><div class="stickerpp-menu">
+    <input type= "file"  class="stickerpp-user-p" id="stickerpp-user-p${qufen}" accept="image/*" style="display:none" >
+    <input type="button" class="stickerpp-user-t" value="上传图片" ${KFstyle}>
+    <input type="button" class="stickerpp-user-y" value="云同步">
+    <input type="button" class="stickerpp-user-i" value="自定义">
+    <input type="button" class="stickerpp-user-g" value="表情组设置">&nbsp;
+    <span class="stickerpp-close-panel" title="表情增强插件，版本${defaultSConf.version}，理论支持所有存在纯文本模式且支持BBcode的支持图片外链的论坛。本次更新日志：${updatelog}" style="cursor: pointer;"><b>⑨</b></span>
+    ${getSubMenuHtml()}<span class="stickerpp-close-panel">[-]</span>&nbsp;
+    <div class="stickerpp-diy-panel" style="display:none">
+    <input type="button" class="stickerpp-user-c" value="添加贴纸">&nbsp;
+    <input type="button" class="stickerpp-user-r" value="导出贴纸">&nbsp;
+    <input type="button" class="stickerpp-user-u" value="修改贴纸">&nbsp;
+    <input type="button" class="stickerpp-user-d" value="删除贴纸">&nbsp;
+    <input type="button" class="stickerpp-user-cfg" value="个性设置">
+    <div class="stickerpp-conf-panel" style="display:none">
     <table><tr><td>
-    <li><input type="text" class="conftext" id="kanbanimg${qufen}" value="">&nbsp;<input type="button" class="spp-res-kanbanimg" value="默认">（看板娘图片URL）<input type="button" class="spp-res-kanbanloc" value="重置看板娘位置"></li>
-    <li><input type="number" class="conftext" id="kanbansize${qufen}" value="">&nbsp;<input type="button" class="spp-res-kanbansize" value="默认">（看板娘/贴图预览大小）</li>
-    <li><input type="text" class="conftext" id="onlineraw${qufen}" value="">&nbsp;<input type="button" class="spp-res-onlineraw" value="默认">（在线贴纸仓库API）&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="button" class="spp-res-all" value="全部初始化"></li>
-    <li><input type="text" class="conftext" id="imgapi${qufen}" value="">&nbsp;<input type="button" class="spp-res-imgapi" value="默认">（图片上传图床API）</li>
-    <li><input type="text" class="conftext" id="olimglists${qufen}" disabled="true" value="">&nbsp;<input type="button" class="spp-res-olimglists" value="默认">（已选在线贴纸ID数组）&nbsp;&nbsp;&nbsp;&nbsp;<input type="button" class="spp-conf-close" value="关闭列表"></li>
+    <li><input type="text" class="conftext" id="kanbanimg${qufen}" value="">&nbsp;<input type="button" class="stickerpp-res-kanbanimg" value="默认">（看板娘图片URL）<input type="button" class="stickerpp-res-kanbanloc" value="重置看板娘位置"></li>
+    <li><input type="number" class="conftext" id="kanbansize${qufen}" value="">&nbsp;<input type="button" class="stickerpp-res-kanbansize" value="默认">（看板娘/贴图预览大小）</li>
+    <li><input type="text" class="conftext" id="onlineraw${qufen}" value="">&nbsp;<input type="button" class="stickerpp-res-onlineraw" value="默认">（在线贴纸仓库API）&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="button" class="stickerpp-res-all" value="全部初始化"></li>
+    <li><input type="text" class="conftext" id="imgapi${qufen}" value="">&nbsp;<input type="button" class="stickerpp-res-imgapi" value="默认">（图片上传图床API）</li>
+    <li><input type="text" class="conftext" id="olimglists${qufen}" disabled="true" value="">&nbsp;<input type="button" class="stickerpp-res-olimglists" value="默认">（已选在线贴纸ID数组）&nbsp;&nbsp;&nbsp;&nbsp;<input type="button" class="stickerpp-conf-close" value="关闭列表"></li>
     <li><input type="checkbox" class="confbt" id="writeable${qufen}" value="writeable"><span style="cursor: help;color:red" title="请确定你知道你在做什么！在此修改（特别是增加！）已选在线贴纸组ID数组可能会发生不可预知的错误！">编辑ID数组【!】</span>
-    <input type="checkbox" class="confbt" id="UseOldNum${qufen}" value="UseOldNum">自定义贴纸使用旧的计数法&nbsp;
+    <input type="checkbox" class="confbt" id="markdown${qufen}" value="markdown">使用Markdown取代BBcode&nbsp;
     <input type="checkbox" class="confbt" id="notauthed${qufen}" value="auth">显示未经验证的数据源</li>
     </td></tr></table>
-    </div></div><div class="spp-acc-panel" style="display:none">
-    <input type="button" class="spp-user-reg" value="注册">&nbsp;
-    <input type="button" class="spp-user-log" value="登录">&nbsp;
-    <input type="button" class="spp-user-img" value="绑定图床">&nbsp;
-    <input type="button" class="spp-user-ltc" value="上传云端">&nbsp;
-    <input type="button" class="spp-user-ctl" value="恢复本地">&nbsp;
-    <input type="button" class="spp-user-out" value="退出登录"></div>
-    <div class="spp-bqz-panel" style="display:none">
-    <input type="button" class="spp-user-loc" value="启用的本地表情">&nbsp;
-    <input type="button" class="spp-user-oln" value="浏览表情组商店">&nbsp;
-    <input type="button" class="spp-user-raw" value="商店数据源设置">&nbsp;
-    <div class="spp-loc-panel" style="display:none"><table><tr>
+    </div></div><div class="stickerpp-acc-panel" style="display:none">
+    <input type="button" class="stickerpp-user-reg" value="注册">&nbsp;
+    <input type="button" class="stickerpp-user-log" value="登录">&nbsp;
+    <input type="button" class="stickerpp-user-img" value="绑定图床">&nbsp;
+    <input type="button" class="stickerpp-user-ltc" value="上传云端">&nbsp;
+    <input type="button" class="stickerpp-user-ctl" value="恢复本地">&nbsp;
+    <input type="button" class="stickerpp-user-out" value="退出登录"></div>
+    <div class="stickerpp-bqz-panel" style="display:none">
+    <input type="button" class="stickerpp-user-loc" value="启用的本地表情">&nbsp;
+    <input type="button" class="stickerpp-user-oln" value="浏览表情组商店">&nbsp;
+    <input type="button" class="stickerpp-user-raw" value="商店数据源设置">&nbsp;
+    <div class="stickerpp-loc-panel" style="display:none"><table><tr>
     <td><li><input type="checkbox" class="locbt" id="ng${qufen}0" value="0">AC娘</li></td>
     <td><li><input type="checkbox" class="locbt" id="ng${qufen}1" value="1">S1麻将脸</li></td>
     <td><li><input type="checkbox" class="locbt" id="ng${qufen}3" value="3">看板娘小B</li></td>
@@ -437,145 +502,153 @@ const createContainer = function (textArea,qufen) {
     <td><li><input type="checkbox" class="locbt" id="ng${qufen}8" value="8">公主链接R</li></td>
     <td><li><input type="checkbox" class="locbt" id="ng${qufen}7" value="7">少女歌剧</li></td>
     <td><li><input type="checkbox" class="locbt" id="ng${qufen}5" value="5">小红豆</li></td>
-    <td><input type="button" class="spp-loc-close"value="关闭列表"></td></tr>
+    <td><input type="button" class="stickerpp-loc-close"value="关闭列表"></td></tr>
     </table></div></div></div></div>`).insertBefore($(textArea));
     if (isKfMobile == true) {
-        $(`<button class="btn btn-secondary upload-image-btn ml-1" title="上传图片" onclick="$('.spp-user-p').click();">
+        $(`<button class="btn btn-secondary upload-image-btn ml-1" title="上传图片" onclick="$('.stickerpp-user-p').click();">
             <i class="fa fa-picture-o" aria-hidden="true"></i>上传图片</button>`).insertAfter($("#smileDropdownBtn"));
     }
-    else if(isKF == true){ $(`<a>&nbsp;</a><input type="button" class="spp-user-pt" value="上传图片" onclick="$('.spp-user-p').click();">`).insertAfter($('[name="Submit"][value!="全站搜索"]')); }
-    $container.on('click', '.spp-sub-menu', function (e) {
+    else if (isKF == true) { $(`<a>&nbsp;</a><input type="button" class="stickerpp-user-pt" value="上传图片" onclick="$('.stickerpp-user-p').click();">`).insertAfter($('[name="Submit"][value!="全站搜索"]')); }
+    $container.on('click', '.stickerpp-sub-menu', function (e) {
         e.preventDefault();
-        $container.find('.spp-acc-panel').hide();
-        $container.find('.spp-bqz-panel').hide();
+        $container.find('.stickerpp-acc-panel').hide();
+        $container.find('.stickerpp-bqz-panel').hide();
         let $this = $(this);
         let key = $this.data('key');
         if (!key) return;
-        $container.find('.spp-sub-menu').removeClass('spp-sub-menu-active');
-        $this.addClass('spp-sub-menu-active');
-        $container.find('.spp-smile-panel').hide();
-        let $panel = $container.find(`.spp-smile-panel[data-key="${key}"]`);
+        $container.find('.stickerpp-sub-menu').removeClass('stickerpp-sub-menu-active');
+        $this.addClass('stickerpp-sub-menu-active');
+        $container.find('.stickerpp-smile-panel').hide();
+        let $panel = $container.find(`.stickerpp-smile-panel[data-key="${key}"]`);
         if ($panel.length > 0) $panel.show();
         else $(getSmilePanelHtml(key)).appendTo($container).show();
-    }).on('click', '.spp-smile, .spp-smile-text', function (e) {
+    }).on('click', '.stickerpp-smile, .stickerpp-smile-text', function (e) {
         e.preventDefault();
         let $this = $(this);
-        let code = $this.data('code');
-        if (!code) code = `[img]${$this.attr('src')}[/img]`;
-        addCode(textArea, code);
+        let code = $this.data('code'), hcode = $this.data('hcode');
+        if (customize.markdown == false) {
+            if (!code) code = `[img]${$this.attr('src')}[/img]`;
+            addCode(textArea, code);
+        }
+        else if (customize.markdown == true) {
+            if (!code) code = `![](${$this.attr('src')})`;
+            addCode(textArea, code);
+        }
+        if (!hcode) hcode = `<img src="${$this.attr('src')}" border="0" alt="" style="max-width:400px"></img>`;
+        addHCode(hcode);
         if (/(Mobile|MIDP)/i.test(navigator.userAgent)) textArea.blur();
         else textArea.focus();
-    }).on('mouseenter', '.spp-smile', function () {
-        $('.spp-zoom-in').remove();
+    }).on('mouseenter', '.stickerpp-smile', function () {
+        $('.stickerpp-zoom-in').remove();
         showZoomInImage($(this));
-    }).on('mouseleave', '.spp-smile', function () {
-        $('.spp-zoom-in').remove();
-    }).on('change', '.spp-user-p', function (e) {
+    }).on('mouseleave', '.stickerpp-smile', function () {
+        $('.stickerpp-zoom-in').remove();
+    }).on('change', '.stickerpp-user-p', function (e) {
         e.preventDefault(); let file = this.files[0];
         if (file != null) {
             let formData = new FormData();
             formData.append('file', file);
             upimgfunc(formData, textArea);
         }
-    }).on('click', '.spp-user-t', function (e) {
+    }).on('click', '.stickerpp-user-t', function (e) {
         e.preventDefault();
-        $('#spp-user-p' + qufen).click();
-    }).on('click', '.spp-user-g', function (e) {
+        $('#stickerpp-user-p' + qufen).click();
+    }).on('click', '.stickerpp-user-g', function (e) {
         e.preventDefault();
-        $container.find('.spp-smile-panel').hide();
-        $container.find('.spp-diy-panel').hide();
-        $container.find('.spp-acc-panel').hide();
+        $container.find('.stickerpp-smile-panel').hide();
+        $container.find('.stickerpp-diy-panel').hide();
+        $container.find('.stickerpp-acc-panel').hide();
         let $this = $(this);
-        $container.find('.spp-user-g').removeClass('spp-user-g-active');
-        $this.addClass('spp-user-g-active');
-        $container.find('.spp-diy-panel').hide();
-        let $panel = $container.find(`.spp-bqz-panel`);
+        $container.find('.stickerpp-user-g').removeClass('stickerpp-user-g-active');
+        $this.addClass('stickerpp-user-g-active');
+        $container.find('.stickerpp-diy-panel').hide();
+        let $panel = $container.find(`.stickerpp-bqz-panel`);
         $panel.show();
-    }).on('click', '.spp-user-i', function (e) {
+    }).on('click', '.stickerpp-user-i', function (e) {
         e.preventDefault();
-        $container.find('.spp-acc-panel').hide();
-        $container.find('.spp-bqz-panel').hide();
+        $container.find('.stickerpp-acc-panel').hide();
+        $container.find('.stickerpp-bqz-panel').hide();
         let $this = $(this);
-        $container.find('.spp-user-i').removeClass('spp-user-i-active');
-        $this.addClass('spp-user-i-active');
-        $container.find('.spp-diy-panel').hide();
-        let $panel = $container.find(`.spp-diy-panel`);
+        $container.find('.stickerpp-user-i').removeClass('stickerpp-user-i-active');
+        $this.addClass('stickerpp-user-i-active');
+        $container.find('.stickerpp-diy-panel').hide();
+        let $panel = $container.find(`.stickerpp-diy-panel`);
         $panel.show();
-    }).on('click', '.spp-user-y', function (e) {
+    }).on('click', '.stickerpp-user-y', function (e) {
         e.preventDefault();
-        $container.find('.spp-smile-panel').hide();
-        $container.find('.spp-diy-panel').hide();
-        $container.find('.spp-bqz-panel').hide();
+        $container.find('.stickerpp-smile-panel').hide();
+        $container.find('.stickerpp-diy-panel').hide();
+        $container.find('.stickerpp-bqz-panel').hide();
         let $this = $(this);
-        $container.find('.spp-user-y').removeClass('spp-user-y-active');
-        $this.addClass('spp-user-y-active');
-        $container.find('.spp-acc-panel').hide();
-        let $panel = $container.find(`.spp-acc-panel`);
+        $container.find('.stickerpp-user-y').removeClass('stickerpp-user-y-active');
+        $this.addClass('stickerpp-user-y-active');
+        $container.find('.stickerpp-acc-panel').hide();
+        let $panel = $container.find(`.stickerpp-acc-panel`);
         $panel.show();
-    }).on('click', '.spp-user-c', function (e) {
-        e.preventDefault();usercfunc();
-    }).on('click', '.spp-user-r', function (e) {
+    }).on('click', '.stickerpp-user-c', function (e) {
+        e.preventDefault(); usercfunc();
+    }).on('click', '.stickerpp-user-r', function (e) {
         e.preventDefault(); userrfunc();
-    }).on('click', '.spp-user-u', function (e) {
+    }).on('click', '.stickerpp-user-u', function (e) {
         e.preventDefault(); userufunc();
-    }).on('click', '.spp-user-d', function (e) {
-        e.preventDefault();userdfunc();
-    }).on('click', '.spp-user-ctl', function (e) {
+    }).on('click', '.stickerpp-user-d', function (e) {
+        e.preventDefault(); userdfunc();
+    }).on('click', '.stickerpp-user-ctl', function (e) {
         e.preventDefault();
         if (localStorage.logindata != null) { ctlfunc() }
         else { alert('未找到有效Token，请先登录！') };
-    }).on('click', '.spp-user-ltc', function (e) {
+    }).on('click', '.stickerpp-user-ltc', function (e) {
         e.preventDefault();
         if (localStorage.logindata != null) { ltcfunc() }
         else { alert('未找到有效Token，请先登录！') };
-    }).on('click', '.spp-user-log', function (e) {
+    }).on('click', '.stickerpp-user-log', function (e) {
         e.preventDefault();
         if (localStorage.logindata == null) { loginfunc() }
         else { alert('请勿重复登录！如需更换账号或Token过期请先登出再登录！') };
-    }).on('click', '.spp-user-img', function (e) {
+    }).on('click', '.stickerpp-user-img', function (e) {
         e.preventDefault();
         if (localStorage.logindata != null) { imgbindcheckfunc() }
         else { alert('请登录云同步账号后再进行绑定！') }
-    }).on('click', '.spp-user-reg', function (e) {
+    }).on('click', '.stickerpp-user-reg', function (e) {
         e.preventDefault();
         if (localStorage.logindata == null) { regfunc() }
         else { alert("检测到您已登录！如需更换账号请先登出！"); }
-    }).on('click', '.spp-user-out', function (e) {
+    }).on('click', '.stickerpp-user-out', function (e) {
         e.preventDefault();
         localStorage.removeItem('logindata'); alert('已登出账号！');
-    }).on('click', '.spp-user-loc', function (e) {
+    }).on('click', '.stickerpp-user-loc', function (e) {
         e.preventDefault();
-        if (customize.lcimglists == false) { for (let i = 0; i < 10; i++) { $(['.locbt']["#ng"+qufen+i]).attr("checked", true); } }
-        else if (customize.lcimglists != false) { let checklcg = customize.lcimglists; for (let i = 0; i < checklcg.length; i++) { $("#ng"+qufen+checklcg[i]).attr("checked", true); } }
+        if (customize.lcimglists == false) { for (let i = 0; i < 10; i++) { $(['.locbt']["#ng" + qufen + i]).attr("checked", true); } }
+        else if (customize.lcimglists != false) { let checklcg = customize.lcimglists; for (let i = 0; i < checklcg.length; i++) { $("#ng" + qufen + checklcg[i]).attr("checked", true); } }
         else { alert("发生错误") };
-        $container.find('.spp-diy-panel').hide();
+        $container.find('.stickerpp-diy-panel').hide();
         let $this = $(this);
-        $container.find('.spp-user-loc').removeClass('spp-user-loc-active');
-        $this.addClass('spp-user-loc-active');
-        $container.find('.spp-loc-panel').hide();
-        let $panel = $container.find(`.spp-loc-panel`);
+        $container.find('.stickerpp-user-loc').removeClass('stickerpp-user-loc-active');
+        $this.addClass('stickerpp-user-loc-active');
+        $container.find('.stickerpp-loc-panel').hide();
+        let $panel = $container.find(`.stickerpp-loc-panel`);
         $panel.show();
-    }).on('click', '.spp-user-oln', function (e) {
+    }).on('click', '.stickerpp-user-oln', function (e) {
         e.preventDefault();
-        SppShowDialog();
-    }).on('click', '.spp-user-raw', function (e) {
+        StickerPPShowDialog();
+    }).on('click', '.stickerpp-user-raw', function (e) {
         e.preventDefault();
         let theonlineraw = prompt("在线表情组商店数据仓库源设置，默认使用inari源", 'https://api.inari.site/?s=App.Sticker.');
         let safeornot = confirm("是否显示未经审核的表情贴纸组？");
         if (theonlineraw) customize.onlineraw = theonlineraw;
         customize.notauthed = safeornot;
         localStorage.setItem('StickerConf', JSON.stringify(customize));
-    }).on('click', '.spp-user-cfg', function (e) {
+    }).on('click', '.stickerpp-user-cfg', function (e) {
         e.preventDefault();
         // 载入个性化设置状态
-        $("#kanbanimg"+qufen).attr("value", customize.kanbanimg);
-        $("#kanbansize"+qufen).attr("value", customize.kanbansize);
-        $("#onlineraw"+qufen).attr("value", customize.onlineraw);
-        $("#imgapi"+qufen).attr("value", customize.imgapi);
-        $("#olimglists"+qufen).attr("value", customize.olimglists);
-        $("#notauthed"+qufen).attr("checked", customize.notauthed);
-        $("#UseOldNum"+qufen).attr("checked", customize.UseOldNum);
-        let $panel = $container.find(`.spp-conf-panel`);
+        $("#kanbanimg" + qufen).attr("value", customize.kanbanimg);
+        $("#kanbansize" + qufen).attr("value", customize.kanbansize);
+        $("#onlineraw" + qufen).attr("value", customize.onlineraw);
+        $("#imgapi" + qufen).attr("value", customize.imgapi);
+        $("#olimglists" + qufen).attr("value", customize.olimglists);
+        $("#notauthed" + qufen).attr("checked", customize.notauthed);
+        $("#markdown" + qufen).attr("checked", customize.markdown);
+        let $panel = $container.find(`.stickerpp-conf-panel`);
         $panel.show();
     }).on('click', '.locbt', function (e) {
         let thenum = e.target.value, locimgs = customize.lcimglists;
@@ -584,73 +657,75 @@ const createContainer = function (textArea,qufen) {
         customize.lcimglists = locimgs;
         localStorage.setItem('StickerConf', JSON.stringify(customize));
         sessionStorage.removeItem('localSmile');
-    }).on('click', '.spp-res-kanbanimg', function () {
+    }).on('click', '.stickerpp-res-kanbanimg', function () {
         customize.kanbanimg = defaultSConf.kanbanimg;
         localStorage.setItem('StickerConf', JSON.stringify(customize));
         alert(resText);
-    }).on('click', '.spp-res-kanbansize', function () {
+    }).on('click', '.stickerpp-res-kanbansize', function () {
         customize.kanbansize = defaultSConf.kanbansize;
         localStorage.setItem('StickerConf', JSON.stringify(customize));
         alert(resText);
-    }).on('click', '.spp-res-onlineraw', function () {
+    }).on('click', '.stickerpp-res-onlineraw', function () {
         customize.onlineraw = defaultSConf.onlineraw;
         localStorage.setItem('StickerConf', JSON.stringify(customize));
         alert(resText);
-    }).on('click', '.spp-res-imgapi', function () {
+    }).on('click', '.stickerpp-res-imgapi', function () {
         customize.imgapi = defaultSConf.imgapi;
         localStorage.setItem('StickerConf', JSON.stringify(customize));
         alert(resText);
-    }).on('click', '.spp-res-olimglists', function () {
+    }).on('click', '.stickerpp-res-olimglists', function () {
         customize.olimglists = defaultSConf.olimglists;
         localStorage.setItem('StickerConf', JSON.stringify(customize));
         alert(resText);
-    }).on('click', '.spp-res-kanbanloc', function () {
+    }).on('click', '.stickerpp-res-kanbanloc', function () {
         localStorage.setItem('imgpvpc', JSON.stringify(["5px", "100px"]));
         alert(resText);
-    }).on('click', '.spp-res-all', function () {
+    }).on('click', '.stickerpp-res-all', function () {
         let todefault = defaultSConf;
         todefault.lcimglists = customize.lcimglists;
         localStorage.setItem('StickerConf', JSON.stringify(todefault));
         localStorage.setItem('imgpvpc', JSON.stringify(["5px", "100px"]));
         sessionStorage.removeItem('localSmile'); sessionStorage.removeItem('OnlineSmile');
         alert("已重置，请刷新！");
-    }).on('click', '#notauthed'+qufen, function (e) {
+    }).on('click', '#notauthed' + qufen, function (e) {
         customize.notauthed = e.target.checked;
         localStorage.setItem('StickerConf', JSON.stringify(customize));
-    }).on('click', '#UseOldNum'+qufen, function (e) {
-        customize.UseOldNum = e.target.checked;
+    }).on('click', '#markdown' + qufen, function (e) {
+        customize.markdown = e.target.checked;
         localStorage.setItem('StickerConf', JSON.stringify(customize));
-    }).on('click', '#writeable'+qufen, function (e) {
-        e.target.checked ? $("#olimglists"+qufen).attr("disabled", false) : $("#olimglists"+qufen).attr("disabled", true);
-    }).on('blur', '#kanbanimg'+qufen, function (e) {
+    }).on('click', '#writeable' + qufen, function (e) {
+        e.target.checked ? $("#olimglists" + qufen).attr("disabled", false) : $("#olimglists" + qufen).attr("disabled", true);
+    }).on('blur', '#kanbanimg' + qufen, function (e) {
         customize.kanbanimg = e.target.value;
         localStorage.setItem('StickerConf', JSON.stringify(customize));
-    }).on('blur', '#kanbansize'+qufen, function (e) {
+    }).on('blur', '#kanbansize' + qufen, function (e) {
         customize.kanbansize = e.target.value;
         localStorage.setItem('StickerConf', JSON.stringify(customize));
-    }).on('blur', '#onlineraw'+qufen, function (e) {
+    }).on('blur', '#onlineraw' + qufen, function (e) {
         customize.onlineraw = e.target.value;
         localStorage.setItem('StickerConf', JSON.stringify(customize));
-    }).on('blur', '#imgapi'+qufen, function (e) {
+    }).on('blur', '#imgapi' + qufen, function (e) {
         customize.imgapi = e.target.value;
         localStorage.setItem('StickerConf', JSON.stringify(customize));
-    }).on('blur', '#olimglists'+qufen, function (e) {
+    }).on('blur', '#olimglists' + qufen, function (e) {
         e.target.value == "" ? TempLists = [] : TempList = qc(e.target.value.match(/\d+/g).map(o => +o));
-        $.ajax({ url: customize.onlineraw +'GetListR&page=1&perpage=1', type: 'POST', contentType: false, processData: false, })
-        .done(data => {if (data.ret == 200) {
-                let ttotal=data.data,total=ttotal.total;
-                for(let i=0;i<TempList.length;i++){if(TempList[i]<=total){get1stfunc(TempList[i]);}}
-            }else { alert('发生'+data.ret+'错误，' + data.msg); }})
-        .fail(data => { alert("未知错误，请打开控制台查看！");console.log(data); });
-    }).on('click', '.spp-loc-close', function () {
-        $container.find('.spp-loc-panel').hide();
-    }).on('click', '.spp-conf-close', function () {
-        $container.find('.spp-conf-panel').hide();
-    }).find('.spp-close-panel').click(function () {
-        $container.find('.spp-smile-panel').hide();
-        $container.find('.spp-diy-panel').hide();
-        $container.find('.spp-acc-panel').hide();
-        $container.find('.spp-bqz-panel').hide();
+        $.ajax({ url: customize.onlineraw + 'GetListR&page=1&perpage=1', type: 'POST', contentType: false, processData: false, })
+            .done(data => {
+                if (data.ret == 200) {
+                    let ttotal = data.data, total = ttotal.total;
+                    for (let i = 0; i < TempList.length; i++) { if (TempList[i] <= total) { get1stfunc(TempList[i]); } }
+                } else { alert('发生' + data.ret + '错误，' + data.msg); }
+            })
+            .fail(data => { alert("未知错误，请打开控制台查看！"); console.log(data); });
+    }).on('click', '.stickerpp-loc-close', function () {
+        $container.find('.stickerpp-loc-panel').hide();
+    }).on('click', '.stickerpp-conf-close', function () {
+        $container.find('.stickerpp-conf-panel').hide();
+    }).find('.stickerpp-close-panel').click(function () {
+        $container.find('.stickerpp-smile-panel').hide();
+        $container.find('.stickerpp-diy-panel').hide();
+        $container.find('.stickerpp-acc-panel').hide();
+        $container.find('.stickerpp-bqz-panel').hide();
     });
     // 文本区域直接上传图片并预览
     document.querySelector('textarea').addEventListener('paste', (event) => {
@@ -658,19 +733,22 @@ const createContainer = function (textArea,qufen) {
         // 修复粘贴文字功能
         addCode(textArea, event.clipboardData.getData('text'));
         const pd = event.clipboardData.items[0];
-        if (!(/^image\/[jpeg|png|gif|jpg]/.test(pd.type))) {return;}
+        if (!(/^image\/[jpeg|png|gif|jpg]/.test(pd.type))) { return; }
         const file = event.clipboardData.items[0].getAsFile()
         // 让文件名使用时间戳
         let name = JSON.stringify(new Date().getTime());
         const files = new File([file], name + "." + file.name.substr(file.name.lastIndexOf('.') + 1), {
-            type: file.type,lastModified: file.lastModified,});
-        let formData = new FormData(),reader = new FileReader();formData.append('file', files);
+            type: file.type, lastModified: file.lastModified,
+        });
+        let formData = new FormData(), reader = new FileReader(); formData.append('file', files);
         reader.onload = function ({ target }) {
-            setTimeout(() => { $(".imgpreview").attr('src', target.result) }, 400)
+            setTimeout(() => { $(".stickerppkanban").attr('src', target.result) }, 400)
             setTimeout(() => {
-                if (isKfMobile == true) { $(".imgpreview").attr('src', 'https://sticker.inari.site/favicon.ico') }
-                else { $(".imgpreview").attr('src', customize.kanbanimg) }}, 4000)}
-        reader.readAsDataURL(files);upimgfunc(formData,textArea);
+                if (isKfMobile == true) { $(".stickerppkanban").attr('src', 'https://sticker.inari.site/favicon.ico') }
+                else { $(".stickerppkanban").attr('src', customize.kanbanimg) }
+            }, 4000)
+        }
+        reader.readAsDataURL(files); upimgfunc(formData, textArea);
     });
 };
 
@@ -751,12 +829,12 @@ function userdfunc() {
     }
 }
 // 表情商店方法
-const SppShowDialog = function () {
-    let $dialog = $("#Spp-shop-dialog")[0];
-    $("body").append(SppDialogHtml);
-    SppLoadSticker(1);
+const StickerPPShowDialog = function () {
+    let $dialog = $("#StickerPP-shop-dialog")[0];
+    $("body").append(StickerPPDialogHtml);
+    StickerPPLoadSticker(1);
 }
-const SppLoadSticker = function (thePage) {
+const StickerPPLoadSticker = function (thePage) {
     let success = function (data) {
         loadStickerList(data.data.items);
         loadStickerListPagination(data.data);
@@ -773,7 +851,6 @@ const SppLoadSticker = function (thePage) {
             let pagejson = PageRequest.responseText;
             let pageload = JSON.parse(pagejson);
             if (pageload.ret == 200) {
-                console.log(pageload);
                 success(pageload);
             }
             else { alert('发生异常！' + pageload.msg); }
@@ -784,61 +861,61 @@ const SppLoadSticker = function (thePage) {
     }
 }
 const loadStickerList = function (items) {
-    let $root = $("#Spp-shop-dialog .Spp-list-content");
+    let $root = $("#StickerPP-shop-dialog .StickerPP-list-content");
     $root.empty();
     $.each(items, function (_, o) {
         let content = JSON.parse(o.content);
-        let $node = $(SppItemHtml).prop("title", content.desc).data("id", o.id).data("content", o.content)
+        let $node = $(StickerPPItemHtml).prop("title", content.desc).data("id", o.id).data("content", o.content)
             .find("img").prop("src", content.cover).end()
             .find(".sticker-item-name").text(o.title).end();
         $root.append($node);
     });
 }
 const loadStickerListPagination = function (data) {
-    let total = Math.ceil(data.total / 20), page = data.page, $root = $("#Spp-shop-dialog .Spp-list-pagination");
+    let total = Math.ceil(data.total / 20), page = data.page, $root = $("#StickerPP-shop-dialog .StickerPP-list-pagination");
     if (page != 1) {
-        $root.append($(SppPaginationItemHtml).data("id", 1).text("回首页"));
+        $root.append($(StickerPPPaginationItemHtml).data("id", 1).text("回首页"));
         $root.append($(prevNextPageHtml).data("id", page - 1).text("上一页"))
     }
     if (total < 12 || page < 7) {
         for (let i = 1; i < page; ++i) {
-            let id = i, $node = $(SppPaginationItemHtml).data("id", id).text(id);
+            let id = i, $node = $(StickerPPPaginationItemHtml).data("id", id).text(id);
             $root.append($node);
         }
-        let $node1 = $(SppNowPageHtml).data("id", page).text(page);
+        let $node1 = $(StickerPPNowPageHtml).data("id", page).text(page);
         $root.append($node1);
         for (let i = page; i < total; ++i) {
-            let id = i + 1, $node = $(SppPaginationItemHtml).data("id", id).text(id);
+            let id = i + 1, $node = $(StickerPPPaginationItemHtml).data("id", id).text(id);
             $root.append($node);
         }
     }
     else if (total > 11 && page + 5 < total) {
         for (let i = page - 5; i < page; ++i) {
-            let id = i, $node = $(SppPaginationItemHtml).data("id", id).text(id);
+            let id = i, $node = $(StickerPPPaginationItemHtml).data("id", id).text(id);
             $root.append($node);
         }
-        let $node1 = $(SppNowPageHtml).data("id", page).text(page);
+        let $node1 = $(StickerPPNowPageHtml).data("id", page).text(page);
         $root.append($node1);
         for (let i = page; i < page + 5; ++i) {
-            let id = i + 1, $node = $(SppPaginationItemHtml).data("id", id).text(id);
+            let id = i + 1, $node = $(StickerPPPaginationItemHtml).data("id", id).text(id);
             $root.append($node);
         }
     }
     else if (total > 11 && page + 6 > total) {
         for (let i = total - 10; i < page; ++i) {
-            let id = i, $node = $(SppPaginationItemHtml).data("id", id).text(id);
+            let id = i, $node = $(StickerPPPaginationItemHtml).data("id", id).text(id);
             $root.append($node);
         }
-        let $node1 = $(SppNowPageHtml).data("id", page).text(page);
+        let $node1 = $(StickerPPNowPageHtml).data("id", page).text(page);
         $root.append($node1);
         for (let i = page; i < total; ++i) {
-            let id = i + 1, $node = $(SppPaginationItemHtml).data("id", id).text(id);
+            let id = i + 1, $node = $(StickerPPPaginationItemHtml).data("id", id).text(id);
             $root.append($node);
         }
     }
     if (page != total) {
         $root.append($(prevNextPageHtml).data("id", page + 1).text("下一页"));
-        $root.append($(SppPaginationItemHtml).data("id", total).text("去末页"));
+        $root.append($(StickerPPPaginationItemHtml).data("id", total).text("去末页"));
     }
 }
 // 注册&登录方法
@@ -1001,6 +1078,7 @@ function upimgfunc(formData, textArea) {
                     let inaridata = data.data, inarilinks = inaridata.links;
                     setTimeout(() => { alert(guestupimgText); }, 1000);
                     addCode(textArea, inarilinks.bbcode);
+                    addHCode(`<img src="${inarilinks.url}" border="0" alt="" style="max-width:400px"></img>`);
                 }
                 else if (data.status == false) {
                     alert(data.message);
@@ -1015,6 +1093,7 @@ function upimgfunc(formData, textArea) {
                 .done(data => {
                     if (data.status == true) {
                         let inaridata = data.data, inarilinks = inaridata.links; addCode(textArea, inarilinks.bbcode);
+                        addHCode(`<img src="${inarilinks.url}" border="0" alt="" style="max-width:400px"></img>`);
                         if (!localStorage.Alertless) {
                             alert(guestupimgText); localStorage.setItem('Alertless', true);
                         }
@@ -1030,6 +1109,7 @@ function upimgfunc(formData, textArea) {
                 .done(data => {
                     if (data.status == true) {
                         let inaridata = data.data, inarilinks = inaridata.links; addCode(textArea, inarilinks.bbcode);
+                        addHCode(`<img src="${inarilinks.url}" border="0" alt="" style="max-width:400px"></img>`);
                     }
                     else if (data.status == false) { alert(data.message); } else { alert('发生未知错误，' + data); }
                 })
@@ -1043,9 +1123,9 @@ function get1stfunc(e) {
         .done(data => {
             if (data.ret == 200) {
                 let sigstk = data.data, thestkc = sigstk.content;
-                FinalList.push(e); FinalRaw.push( JSON.parse(thestkc));customize.olimglists=FinalList;
+                FinalList.push(e); FinalRaw.push(JSON.parse(thestkc)); customize.olimglists = FinalList;
                 localStorage.setItem('onlineraws', JSON.stringify(FinalRaw));
-                localStorage.setItem('StickerConf',JSON.stringify(customize));
+                localStorage.setItem('StickerConf', JSON.stringify(customize));
                 sessionStorage.removeItem('OnlineSmile');
             }
             else { console.log(data.ret + '错误，' + data.msg); }
@@ -1071,9 +1151,9 @@ function drag(obj) {
             if (cleft == vleft && vtop == ctop) {
                 let $textAreas = $("textarea");
                 if (!$textAreas.length) return;
-                if($textAreas.length==1){$('.spp-user-p').click(); }
-                else{alert(kanbanerrText)}
-                }
+                if ($textAreas.length == 1) { $('.stickerpp-user-p').click(); }
+                else { alert(kanbanerrText) }
+            }
             else { localStorage.setItem('imgpvpc', JSON.stringify([vleft, vtop])); };
         }; return false;
     };
@@ -1083,65 +1163,68 @@ function drag(obj) {
 /**
  * 添加CSS
  */
- const appendCss = function () {$('head').append(`
+const appendCss = function () {
+    $('head').append(`
 <style>
-  .spp-container { padding: 5px; vertical-align: middle; font: 12px/1.7em "sans-serif"; }
-  .spp-menu { margin-bottom: 5px; }
-  .spp-sub-menu { margin: 0 5px; text-decoration: none; border-bottom: 2px solid transparent; }
-  .spp-sub-menu:hover, .spp-sub-menu:focus { text-decoration: none; border-color: deeppink; }
-  a.spp-sub-menu-active { color: black }
-  .spp-smile-panel { display: none; height: 136px; padding: 5px 3px; overflow-y: auto; border-top: 1px solid #ddd; }
-  .spp-smile-panel[data-key="Shortcut"] { height: auto; }
-  .spp-smile { display: inline-block; max-width: 60px; max-height: 60px; cursor: pointer; }
-  .spp-smile-text { display: inline-block; padding: 3px 5px; }
-  .spp-smile-text:hover { color: #fff !important; background-color: #2b2b2b; text-decoration: none; }
-  .spp-close-panel { cursor: pointer; }
-  .spp-zoom-in {
+  .stickerpp-container { padding: 5px; vertical-align: middle; font: 12px/1.7em "sans-serif"; }
+  .stickerpp-menu { margin-bottom: 5px; }
+  .stickerpp-sub-menu { margin: 0 5px; text-decoration: none; border-bottom: 2px solid transparent; }
+  .stickerpp-sub-menu:hover, .stickerpp-sub-menu:focus { text-decoration: none; border-color: deeppink; }
+  a.stickerpp-sub-menu-active { color: black }
+  .stickerpp-smile-panel { display: none; height: 136px; padding: 5px 3px; overflow-y: auto; border-top: 1px solid #ddd; }
+  .stickerpp-smile-panel[data-key="Shortcut"] { height: auto; }
+  .stickerpp-smile { display: inline-block; max-width: 60px; max-height: 60px; cursor: pointer; }
+  .stickerpp-smile-text { display: inline-block; padding: 3px 5px; }
+  .stickerpp-smile-text:hover { color: #fff !important; background-color: #2b2b2b; text-decoration: none; }
+  .stickerpp-close-panel { cursor: pointer; }
+  .stickerpp-zoom-in {
     position: absolute; max-width: 150px; max-height: 150px; background-color: #fcfcfc; border: 3px solid rgba(242, 242, 242, 0.6);
     border-radius: 2px; box-shadow: 0 0 3px rgb(102, 102, 102);
   }
-  .spp-shop_box sheader {height: 42px;background: rgb(49, 49, 49);display: block;font-size: 100%;margin: 0px;padding: 0px;color: rgb(115, 115, 115);font-family: "Helvetica Neue", Helvetica, arial, sans-serif;line-height: 1.231;}
-  .spp-shop_box sheader logo{float: left;margin: 25px 2px 0px 30px;font-size: 150%;padding: 0px;display: block;margin-block-start: 0.67em;margin-block-end: 0.67em;margin-inline-start: 0px;margin-inline-end: 0px;color:#fff;}
-  .spp-shop_box sheader span { float: right; margin: 25px 2px 0px 30px;font-size: 150%;padding: 0px;display: block;margin-block-start: 0.67em;margin-block-end: 0.67em;margin-inline-start: 0px;margin-inline-end: 0px;color:#fff;}
-  .spp-shop_nav { text-align: right; margin-top: 5px; margin-bottom: -5px; }
-  .spp-shop_main fieldset { border: 1px solid #ccccff; padding: 0 6px 6px; }
-  .spp-shop_main legend { font-weight: bold; }
-  .Spp-list-content {display: block;margin-block-start: 0em;margin-block-end: 1em;margin-inline-start: 0px;margin-inline-end: 0px;padding-inline-start: 40px;list-style-type: disc;line-height: 20px;background-color: #fcfcfc}
+  .stickerpp-shop_box sheader {height: 42px;background: rgb(49, 49, 49);display: block;font-size: 100%;margin: 0px;padding: 0px;color: rgb(115, 115, 115);font-family: "Helvetica Neue", Helvetica, arial, sans-serif;line-height: 1.231;}
+  .stickerpp-shop_box sheader logo{float: left;margin: 25px 2px 0px 30px;font-size: 150%;padding: 0px;display: block;margin-block-start: 0.67em;margin-block-end: 0.67em;margin-inline-start: 0px;margin-inline-end: 0px;color:#fff;}
+  .stickerpp-shop_box sheader span { float: right; margin: 25px 2px 0px 30px;font-size: 150%;padding: 0px;display: block;margin-block-start: 0.67em;margin-block-end: 0.67em;margin-inline-start: 0px;margin-inline-end: 0px;color:#fff;}
+  .stickerpp-shop_nav { text-align: right; margin-top: 5px; margin-bottom: -5px; }
+  .stickerpp-shop_main fieldset { border: 1px solid #ccccff; padding: 0 6px 6px; }
+  .stickerpp-shop_main legend { font-weight: bold; }
+  .StickerPP-list-content {display: block;margin-block-start: 0em;margin-block-end: 1em;margin-inline-start: 0px;margin-inline-end: 0px;padding-inline-start: 40px;list-style-type: disc;line-height: 20px;background-color: #fcfcfc}
   .sticker-item-img {text-align: center;}
-  .spp-shop_main input[type="color"] { height: 18px; width: 30px; padding: 0; }
-  .spp-shop_tips { color: #51d; text-decoration: none; cursor: help; }
-  .spp-shop_tips:hover { color: #ff0000; }
-  #pdConfigDialog .spp-shop_main { overflow-x: hidden; white-space: nowrap; }
-  .spp-shop_panel { display: inline-block; width: 400px; vertical-align: top; }
-  .spp-shop_panel + .spp-shop_panel { margin-left: 5px; }
-  .spp-shop_btns { background-color: #fcfcfc; text-align: right; padding: 5px; }
-  .spp-shop_btns input, .spp-shop_btns button { vertical-align: middle; }
-  .spp-shop_btns button { min-width: 64px; }
-  .Spp-pagination-item-button {border-style: none;display: inline-block; text-align: center; margin: 5px;}
-  .Spp-pagination-nowpage-button {    border: 1px solid #e5e5e5;color: #00b84f;min-width: 30px;display: inline-block; text-align: center; margin: 5px;}
-  .Spp-pagination-prev-next {border-style: none;display: inline-block; text-align: center; margin: 5px;}
+  .stickerpp-shop_main input[type="color"] { height: 18px; width: 30px; padding: 0; }
+  .stickerpp-shop_tips { color: #51d; text-decoration: none; cursor: help; }
+  .stickerpp-shop_tips:hover { color: #ff0000; }
+  #pdConfigDialog .stickerpp-shop_main { overflow-x: hidden; white-space: nowrap; }
+  .stickerpp-shop_panel { display: inline-block; width: 400px; vertical-align: top; }
+  .stickerpp-shop_panel + .stickerpp-shop_panel { margin-left: 5px; }
+  .stickerpp-shop_btns { background-color: #fcfcfc; text-align: right; padding: 5px; }
+  .stickerpp-shop_btns input, .stickerpp-shop_btns button { vertical-align: middle; }
+  .stickerpp-shop_btns button { min-width: 64px; }
+  .StickerPP-pagination-item-button {border-style: none;display: inline-block; text-align: center; margin: 5px;}
+  .StickerPP-pagination-nowpage-button {    border: 1px solid #e5e5e5;color: #00b84f;min-width: 30px;display: inline-block; text-align: center; margin: 5px;}
+  .StickerPP-pagination-prev-next {border-style: none;display: inline-block; text-align: center; margin: 5px;}
   .sticker-pages {background-color: #fcfcfc;padding: 8px 0 6px 10px;position: relative;color: #707072;font-size: 10px;margin: 0;text-align: center;display: inline-block;width: 100%; }
-  .spp-shop_footer {background-color: #f7f7fc;border-top: 1px solid #e6e6e6;padding: 8px 0 6px 10px;position: relative;color: #707072;font-size: 10px;margin: 0;}
-  .spp-shop_footer a{color: #707072;font-size: 10px;}
+  .stickerpp-shop_footer {background-color: #f7f7fc;border-top: 1px solid #e6e6e6;padding: 8px 0 6px 10px;position: relative;color: #707072;font-size: 10px;margin: 0;}
+  .stickerpp-shop_footer a{color: #707072;font-size: 10px;}
   .pd_custom_script_header { margin: 7px 0; padding: 5px; background-color: #e8e8e8; border-radius: 5px; }
   .pd_custom_script_content { display: none; width: 750px; height: 350px; white-space: pre; }
   </style>`);
-    if (isKfMobile == false&&isMobile ==false) {$('head').append(`<style>
-  .spp-shop_box {
+    if (isKfMobile == false && isMobile == false) {
+        $('head').append(`<style>
+  .stickerpp-shop_box {
     position: fixed;display: none; z-index: 1002;
     -webkit-box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.5); -moz-box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.5); box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.5);max-width: 1000px;
     left:0 !important;right:0 !important;margin:auto;}
-  .spp-shop_main { background-color: #fcfcfc; padding: 0 10px; font-size: 12px; line-height: 24px; height: 450px;max-height: 450px;}
+  .stickerpp-shop_main { background-color: #fcfcfc; padding: 0 10px; font-size: 12px; line-height: 24px; height: 450px;max-height: 450px;}
   .sticker-item {    display: inline-block;margin: 0 60px 26px 0;vertical-align: top;width: 128px;}
   .sticker-item-name {    color: #737373;font-size: 12px;line-height: 1.2;max-height: 38.2px;text-align: center;word-break: break-word;-webkit-line-clamp: 2;-webkit-box-orient: vertical;display: -webkit-box;overflow: hidden;width: 120px}
 </style>`);
-    }else if (isKfMobile == true||isMobile ==true) {$('head').append(`<style>
-  #readPage .spp-container, #writeMessagePage .spp-container { margin-top: -10px; }
-  .spp-shop_box {
+    } else if (isKfMobile == true || isMobile == true) {
+        $('head').append(`<style>
+  #readPage .stickerpp-container, #writeMessagePage .stickerpp-container { margin-top: -10px; }
+  .stickerpp-shop_box {
     position: fixed;display: none; z-index: 1002;
     -webkit-box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.5); -moz-box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.5); box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.5);max-width: 400px;
     left:0 !important;right:0 !important;top:50px !important;margin:auto;}
-  .spp-shop_main { background-color: #fcfcfc; padding: 0 10px; font-size: 12px; line-height: 24px; height: 520px;max-height: 600px;}
+  .stickerpp-shop_main { background-color: #fcfcfc; padding: 0 10px; font-size: 12px; line-height: 24px; height: 520px;max-height: 600px;}
   .sticker-item { display: inline-block;margin: 0 10px 22px 0;vertical-align: top;width: 72px;}
   .sticker-item-name {    color: #737373;font-size: 12px;line-height: 1.2;max-height: 38.2px;text-align: center;word-break: break-word;-webkit-line-clamp: 2;-webkit-box-orient: vertical;display: -webkit-box;overflow: hidden;width: 72px}
 </style>`);
@@ -1157,14 +1240,18 @@ const init = function () {
     let $textAreas = $("textarea");
     if (!$textAreas.length) return;
     appendCss();
-    $textAreas.each(function (i) {createContainer(this,i);});
+    $textAreas.each(function (i) { createContainer(this, i); });
 };
 if (loadcustom == false) {
     localStorage.setItem('imgpvpc', JSON.stringify(["5px", "100px"]));
     alert('首次使用，部署默认设置。您可以在【自定义】->【个性设置】中完成个性化设置！');
     customize.lcimglists = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
     localStorage.setItem('StickerConf', JSON.stringify(customize));
-    localStorage.removeItem('onlineraws');localStorage.removeItem('Alertless');sessionStorage.removeItem('localSmile'); sessionStorage.removeItem('OnlineSmile');
+    localStorage.removeItem('onlineraws'); localStorage.removeItem('Alertless'); sessionStorage.removeItem('localSmile'); sessionStorage.removeItem('OnlineSmile');
     alert('当前表情贴纸组为默认设置，您可以在【表情组设置->启用的本地表情组/表情组商店】中选择要启用的表情组！');
 };
+let rhview = false, $realtimeView;
+if ($("iframe[id='e_iframe'],iframe[name='iframe']").length > 0) {
+    $realtimeView = $("iframe[id*='iframe'],iframe[name='iframe']"), rhview = true;
+}
 init();
