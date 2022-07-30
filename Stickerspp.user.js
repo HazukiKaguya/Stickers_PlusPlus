@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        表情贴纸增强插件
 // @namespace   https://github.com/HazukiKaguya/Stickers_PlusPlus
-// @version     1.99
+// @version     1.99.1
 // @author      HazukiKaguya
 // @description 回复表情，插图扩展插件，在发帖时快速输入自定义表情和论坛BBCODE
 // @icon        https://sticker.inari.site/favicon.ico
@@ -1003,7 +1003,8 @@ function imgbindfunc() {
     $.ajax({ url: imgapi + 'tokens', type: 'POST', dataType: 'json', data: formData, contentType: "application/json", processData: false, })
         .done(data => {
             if (data.status == true) {
-                let tokendata = data.data, token = tokendata.token, tokenarray = [syncid, synctoken, token];
+                let tokenTList = JSON.parse(localStorage.logindata), synctid = tokenTList[0], syncttoken = tokenTList[1];
+                let tokendata = data.data, token = tokendata.token, tokenarray = [synctid, syncttoken, token];
                 localStorage.setItem('logindata', JSON.stringify(tokenarray)); let tokenRequest = new XMLHttpRequest();
                 tokenRequest.open('POST', 'https://api.inari.site/?s=App.User_User.tupdate&user_id=' + syncid + '&token=' + synctoken + '&tupdate=' + token, true);
                 tokenRequest.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
