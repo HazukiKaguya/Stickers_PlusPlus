@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        表情贴纸增强插件
 // @namespace   https://github.com/HazukiKaguya/Stickers_PlusPlus
-// @version     2.0.1
+// @version     2.0.2
 // @author      HazukiKaguya
 // @description 回复表情，插图扩展插件，在发帖时快速输入自定义表情和论坛BBCODE
 // @icon        https://sticker.inari.site/favicon.ico
@@ -128,7 +128,7 @@ const
     guestupimgText = "游客上传成功！建议绑定up.inari.site图床账号到云同步账号！",
     kanbanerrText = "当前存在多个文本区，无法确认上传区域，看板娘点击上传暂不可用！",
     resText = "已重置，请刷新！",
-    updatelog = 'V2.0.1 : 为不支持所见即所得模式的论坛添加实时编辑模式，修复若干bug。'
+    updatelog = 'V2.0.2 : 为不支持所见即所得模式的论坛添加实时编辑模式，修复若干bug。'
     ;
 
 
@@ -969,7 +969,9 @@ const createContainer = function (textArea, qufen) {
  * @param textArea 文本框
  */
 // 修复实时编辑模式下phpwind的回复某楼
-let realedits = true;
+let realedits = true,uupath = [];
+const uploadfile=`data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFoAAAAVCAYAAADGpvm7AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAMGSURBVFhH7ZkxduIwEIZ/71lsCl5OYJ8Ap6Gi3c6UcIAt9wCmjLttqWgwJ8An4FFg30U7Y0kgWTaBgEkRf+/pkcgjaTRI848TTxAY6J1f6nOgZ3oNdLWK4HkRVpXqeCXVCpHnIbph8d3cIz+5dfv66F5+/InmAMZZiLQUEGKPhU+du3kd+PlO2jyDHx7oCtt1AYQzvHOAGxxOz7uKQ45m3kaw4jz5oNMtsK+P93MYAv0iVKArrCISg2hFP5mofiNZXURBPatFRLbbc5o71vPmaBsu1zPsWhfZYW7asH+letSBnDfAkjIHsliO0/u/K0ffFocvnugCyyDA8Q8LiGxlGpK/tzjHQaENIkWpxnLLkwxxU9Vpw7/x72wjyhQhBcWqJOrqIkaW5IbdDOt4SV524y/2ZFuC3Ab02P3CTiGf0rKXPKnj4FQ79JAoBS0oEKb0k4nqT3L1O/WkIb/giJBk2sadQ9qGwjQlP6gvEZcZNblIaF5zLRd3jc758qTDTxN3fzVqrNl9z17a+r94okPMHJn28T6j41Ec0X1rd9hk9JFMMZEdBhNMKdLINnYKUfWwvJbqqp+5Ml8wJi/7pHvtYMwrH2AWLT2Iob2ARXWip/Q1jQP5ewPpoEblvuBKCvhkvpeg87vRAvs01Dw10OWRF3jDqCvR+SN6yoe+/czL8YpqCy5xz/mzbiqnatR834rln9nUy49CBdrHSEbAvvZ6sw4F3FhdSwuajvRQU+HEx1OPL4/1SU6m5mwlzO+C7gD4EhTrrawWDKrt+qoYPo7ay+HkrN0KRV/iiIcSioZAaTG0hUHb2mLRJiDUKSg2jvA6AqLtjLWlTWOs8tsSNN1Hzd2PKVKPiWGbjwzbNkX4kjrobYgMUCwDlWu4fGtc1TMh0pxKqEDnJRapBHnjurTiL7DnFEBFUWDktfjAJdLH5TawHUXWzIGbaYs//BbXsPP+jlFyKahMeqPeS46kkae5JG2+Vd7992gu9EmfkJY3BHXgTA9Vx0AbQ6BfxBDoFzH8z/AlAP8BmM5ocebFmOwAAAAASUVORK5CYII=`;
+;
 function postreplys(txta, txtb) {
     console.log('hi')
     if (typeof document.FORM != "undefined") {
@@ -982,11 +984,131 @@ $(document).on('click', "a[title='回复此楼']", function (e) {
     let rpstr=e.target.getAttribute("onclick");
     rpstr=rpstr.replace(/postreply\('*([^\'\"]*)','[^\'\"]*'\);/g, '$1');
     $('.StickerPPHtmlEditer')[0].innerHTML+=`<fieldset><legend>quote:</legend>${rpstr}</fieldset><br>`;
-});
-$(document).on('click', "a[title='多重回复']", function () {
+}).on('click', "a[title='多重回复']", function () {
     if (realedit == true) { realedits = false; }
     $('textarea').show(); $('.StickerPPHtmlEditerP').hide();
+}).on("change", "#attachment_1", function (e) {
+    let FileData = e.target.files[0];
+    if (!/image\/\w+/.test(FileData.type)) {uupath.push(uploadfile);}
+    else {
+        let upreader = new FileReader();
+        upreader.readAsDataURL(FileData);
+        upreader.onload = function (e) {
+            uupath.push(this.result);
+        }
+    }
+}).on("change", "#attachment_2", function (e) {
+    let FileData = e.target.files[0];
+    if (!/image\/\w+/.test(FileData.type)) {uupath.push(uploadfile);}
+    else {
+        let upreader = new FileReader();
+        upreader.readAsDataURL(FileData);
+        upreader.onload = function (e) {
+            uupath.push(this.result);
+        }
+    }
+}).on("change", "#attachment_3", function (e) {
+    let FileData = e.target.files[0];
+    if (!/image\/\w+/.test(FileData.type)) {uupath.push(uploadfile);}
+    else {
+        let upreader = new FileReader();
+        upreader.readAsDataURL(FileData);
+        upreader.onload = function (e) {
+            uupath.push(this.result);
+        }
+    }
+}).on("change", "#attachment_4", function (e) {
+    let FileData = e.target.files[0];
+    if (!/image\/\w+/.test(FileData.type)) {uupath.push(null);}
+    else {
+        let upreader = new FileReader();
+        upreader.readAsDataURL(FileData);
+        upreader.onload = function (e) {
+            uupath.push(this.result);
+        }
+    }
+}).on("change", "#attachment_5", function (e) {
+    let FileData = e.target.files[0];
+    if (!/image\/\w+/.test(FileData.type)) {uupath.push(null);}
+    else {
+        let upreader = new FileReader();
+        upreader.readAsDataURL(FileData);
+        upreader.onload = function (e) {
+            uupath.push(this.result);
+        }
+    }
+}).on("change", "#attachment_6", function (e) {
+    let FileData = e.target.files[0];
+    if (!/image\/\w+/.test(FileData.type)) {uupath.push(uploadfile);}
+    else {
+        let upreader = new FileReader();
+        upreader.readAsDataURL(FileData);
+        upreader.onload = function (e) {
+            uupath.push(this.result);
+        }
+    }
+}).on("change", "#attachment_7", function (e) {
+    let FileData = e.target.files[0];
+    if (!/image\/\w+/.test(FileData.type)) {uupath.push(uploadfile);}
+    else {
+        let upreader = new FileReader();
+        upreader.readAsDataURL(FileData);
+        upreader.onload = function (e) {
+            uupath.push(this.result);
+        }
+    }
+}).on("change", "#attachment_8", function (e) {
+    let FileData = e.target.files[0];
+    if (!/image\/\w+/.test(FileData.type)) {uupath.push(uploadfile);}
+    else {
+        let upreader = new FileReader();
+        upreader.readAsDataURL(FileData);
+        upreader.onload = function (e) {
+            uupath.push(this.result);
+        }
+    }
+}).on("change", "#attachment_9", function (e) {
+    let FileData = e.target.files[0];
+    if (!/image\/\w+/.test(FileData.type)) {uupath.push(uploadfile);}
+    else {
+        let upreader = new FileReader();
+        upreader.readAsDataURL(FileData);
+        upreader.onload = function (e) {
+            uupath.push(this.result);
+        }
+    }
+}).on("change", "#attachment_10", function (e) {
+    let FileData = e.target.files[0];
+    if (!/image\/\w+/.test(FileData.type)) {uupath.push(uploadfile);}
+    else {
+        let upreader = new FileReader();
+        upreader.readAsDataURL(FileData);
+        upreader.onload = function (e) {
+            uupath.push(this.result);
+        }
+    }
+}).on("click", "#att_span1 .abtn", function (e) {
+    $('.StickerPPHtmlEditer')[0].innerHTML+=`<img src="${uupath[0]}" type="upload_1" width="240">`;
+}).on("click", "#att_span2 .abtn", function (e) {
+    $('.StickerPPHtmlEditer')[0].innerHTML+=`<img src="${uupath[1]}" type="upload_2" width="240">`;
+}).on("click", "#att_span3 .abtn", function (e) {
+    $('.StickerPPHtmlEditer')[0].innerHTML+=`<img src="${uupath[2]}" type="upload_3" width="240">`;
+}).on("click", "#att_span4 .abtn", function (e) {
+    $('.StickerPPHtmlEditer')[0].innerHTML+=`<img src="${uupath[3]}" type="upload_4" width="240">`;
+}).on("click", "#att_span5 .abtn", function (e) {
+    $('.StickerPPHtmlEditer')[0].innerHTML+=`<img src="${uupath[4]}" type="upload_5" width="240">`;
+}).on("click", "#att_span6 .abtn", function (e) {
+    $('.StickerPPHtmlEditer')[0].innerHTML+=`<img src="${uupath[5]}" type="upload_6" width="240">`;
+}).on("click", "#att_span7 .abtn", function (e) {
+    $('.StickerPPHtmlEditer')[0].innerHTML+=`<img src="${uupath[6]}" type="upload_7" width="240">`;
+}).on("click", "#att_span8 .abtn", function (e) {
+    $('.StickerPPHtmlEditer')[0].innerHTML+=`<img src="${uupath[7]}" type="upload_8" width="240">`;
+}).on("click", "#att_span9 .abtn", function (e) {
+    $('.StickerPPHtmlEditer')[0].innerHTML+=`<img src="${uupath[8]}" type="upload_9" width="240">`;
+}).on("click", "#att_span10 .abtn", function (e) {
+    $('.StickerPPHtmlEditer')[0].innerHTML+=`<img src="${uupath[9]}" type="upload_10" width="240">`;
 });
+
 // html2bb&bb2html
 function html2bb(str) {
     str = str.replace(/<img[^>]*smile=\"(\d+)\"[^>]*>/ig, '[s:$1]');
@@ -1064,117 +1186,6 @@ function bb2html(str) {
     return str;
 }
 // 杂项
-let uupath=[];
-$("#attachment_1").change(function (e) {
-    let FileData = e.target.files[0];
-    if (!/image\/\w+/.test(FileData.type)) { return;}
-    else {
-        let upreader = new FileReader();
-        upreader.readAsDataURL(FileData);
-        upreader.onload = function (e) {
-            uupath[0] = this.result;
-        }
-    }
-});
-$("#attachment_2").change(function (e) {
-    let FileData = e.target.files[0];
-    if (!/image\/\w+/.test(FileData.type)) {return;}
-    else {
-        let upreader = new FileReader();
-        upreader.readAsDataURL(FileData);
-        upreader.onload = function (e) {
-            uupath[1] = this.result;
-        }
-    }
-});
-$("#attachment_3").change(function (e) {
-    let FileData = e.target.files[0];
-    if (!/image\/\w+/.test(FileData.type)) {return;}
-    else {
-        let upreader = new FileReader();
-        upreader.readAsDataURL(FileData);
-        upreader.onload = function (e) {
-            uupath[2] = this.result;
-        }
-    }
-});
-$("#attachment_4").change(function (e) {
-    let FileData = e.target.files[0];
-    if (!/image\/\w+/.test(FileData.type)) {return;}
-    else {
-        let upreader = new FileReader();
-        upreader.readAsDataURL(FileData);
-        upreader.onload = function (e) {
-            uupath[3] = this.result;
-        }
-    }
-});
-$("#attachment_5").change(function (e) {
-    let FileData = e.target.files[0];
-    if (!/image\/\w+/.test(FileData.type)) {return;}
-    else {
-        let upreader = new FileReader();
-        upreader.readAsDataURL(FileData);
-        upreader.onload = function (e) {
-            uupath[4] = this.result;
-        }
-    }
-});
-$("#attachment_6").change(function (e) {
-    let FileData = e.target.files[0];
-    if (!/image\/\w+/.test(FileData.type)) {return;}
-    else {
-        let upreader = new FileReader();
-        upreader.readAsDataURL(FileData);
-        upreader.onload = function (e) {
-            uupath[5] = this.result;
-        }
-    }
-});
-$("#attachment_7").change(function (e) {
-    let FileData = e.target.files[0];
-    if (!/image\/\w+/.test(FileData.type)) {return;}
-    else {
-        let upreader = new FileReader();
-        upreader.readAsDataURL(FileData);
-        upreader.onload = function (e) {
-            uupath[6] = this.result;
-        }
-    }
-});
-$("#attachment_8").change(function (e) {
-    let FileData = e.target.files[0];
-    if (!/image\/\w+/.test(FileData.type)) {return;}
-    else {
-        let upreader = new FileReader();
-        upreader.readAsDataURL(FileData);
-        upreader.onload = function (e) {
-            uupath[7] = this.result;
-        }
-    }
-});
-$("#attachment_9").change(function (e) {
-    let FileData = e.target.files[0];
-    if (!/image\/\w+/.test(FileData.type)) {return;}
-    else {
-        let upreader = new FileReader();
-        upreader.readAsDataURL(FileData);
-        upreader.onload = function (e) {
-            uupath[8] = this.result;
-        }
-    }
-});
-$("#attachment_10").change(function (e) {
-    let FileData = e.target.files[0];
-    if (!/image\/\w+/.test(FileData.type)) {return;}
-    else {
-        let upreader = new FileReader();
-        upreader.readAsDataURL(FileData);
-        upreader.onload = function (e) {
-            uupath[9] = this.result;
-        }
-    }
-});
 function attpath(attid, type) {
     let path = '', upath = false;
     if (type == 'attachment' && IsElement('atturl_' + attid)) {
@@ -1183,7 +1194,7 @@ function attpath(attid, type) {
     else if (type == 'upload' && IsElement('attachment_' + attid)) {
         let FileData = $('#attachment_' + attid)[0].files[0];
         if (!/image\/\w+/.test(FileData.type)) {
-            return;
+            path='';upath=false;
         }
         else {
             path = uupath[attid-1];upath=true;
