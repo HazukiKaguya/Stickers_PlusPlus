@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        表情贴纸增强插件
 // @namespace   https://github.com/HazukiKaguya/Stickers_PlusPlus
-// @version     2.0.2
+// @version     2.0.3
 // @author      HazukiKaguya
 // @description 回复表情，插图扩展插件，在发帖时快速输入自定义表情和论坛BBCODE
 // @icon        https://sticker.inari.site/favicon.ico
@@ -128,7 +128,7 @@ const
     guestupimgText = "游客上传成功！建议绑定up.inari.site图床账号到云同步账号！",
     kanbanerrText = "当前存在多个文本区，无法确认上传区域，看板娘点击上传暂不可用！",
     resText = "已重置，请刷新！",
-    updatelog = 'V2.0.2 : 为不支持所见即所得模式的论坛添加实时编辑模式，修复若干bug。'
+    updatelog = 'V2.0.3 : 为不支持所见即所得模式的论坛添加实时编辑模式，修复若干bug。'
     ;
 
 
@@ -989,102 +989,102 @@ $(document).on('click', "a[title='回复此楼']", function (e) {
     $('textarea').show(); $('.StickerPPHtmlEditerP').hide();
 }).on("change", "#attachment_1", function (e) {
     let FileData = e.target.files[0];
-    if (!/image\/\w+/.test(FileData.type)) {uupath.push(uploadfile);}
+    if (!/image\/\w+/.test(FileData.type)) {uupath[0]=uploadfile;}
     else {
         let upreader = new FileReader();
         upreader.readAsDataURL(FileData);
         upreader.onload = function (e) {
-            uupath.push(this.result);
+            uupath[0]=this.result;
         }
     }
 }).on("change", "#attachment_2", function (e) {
     let FileData = e.target.files[0];
-    if (!/image\/\w+/.test(FileData.type)) {uupath.push(uploadfile);}
+    if (!/image\/\w+/.test(FileData.type)) {uupath[1]=uploadfile;}
     else {
         let upreader = new FileReader();
         upreader.readAsDataURL(FileData);
         upreader.onload = function (e) {
-            uupath.push(this.result);
+            uupath[1]=this.result;
         }
     }
 }).on("change", "#attachment_3", function (e) {
     let FileData = e.target.files[0];
-    if (!/image\/\w+/.test(FileData.type)) {uupath.push(uploadfile);}
+    if (!/image\/\w+/.test(FileData.type)) {uupath[2]=uploadfile;}
     else {
         let upreader = new FileReader();
         upreader.readAsDataURL(FileData);
         upreader.onload = function (e) {
-            uupath.push(this.result);
+            uupath[2]=this.result;
         }
     }
 }).on("change", "#attachment_4", function (e) {
     let FileData = e.target.files[0];
-    if (!/image\/\w+/.test(FileData.type)) {uupath.push(null);}
+    if (!/image\/\w+/.test(FileData.type)) {uupath[3]=uploadfile;}
     else {
         let upreader = new FileReader();
         upreader.readAsDataURL(FileData);
         upreader.onload = function (e) {
-            uupath.push(this.result);
+            uupath[3]=this.result;
         }
     }
 }).on("change", "#attachment_5", function (e) {
     let FileData = e.target.files[0];
-    if (!/image\/\w+/.test(FileData.type)) {uupath.push(null);}
+    if (!/image\/\w+/.test(FileData.type)) {uupath[4]=uploadfile;}
     else {
         let upreader = new FileReader();
         upreader.readAsDataURL(FileData);
         upreader.onload = function (e) {
-            uupath.push(this.result);
+            uupath[4]=this.result;
         }
     }
 }).on("change", "#attachment_6", function (e) {
     let FileData = e.target.files[0];
-    if (!/image\/\w+/.test(FileData.type)) {uupath.push(uploadfile);}
+    if (!/image\/\w+/.test(FileData.type)) {uupath[5]=uploadfile;}
     else {
         let upreader = new FileReader();
         upreader.readAsDataURL(FileData);
         upreader.onload = function (e) {
-            uupath.push(this.result);
+            uupath[5]=this.result;
         }
     }
 }).on("change", "#attachment_7", function (e) {
     let FileData = e.target.files[0];
-    if (!/image\/\w+/.test(FileData.type)) {uupath.push(uploadfile);}
+    if (!/image\/\w+/.test(FileData.type)) {uupath[6]=uploadfile;}
     else {
         let upreader = new FileReader();
         upreader.readAsDataURL(FileData);
         upreader.onload = function (e) {
-            uupath.push(this.result);
+            uupath[6]=this.result;
         }
     }
 }).on("change", "#attachment_8", function (e) {
     let FileData = e.target.files[0];
-    if (!/image\/\w+/.test(FileData.type)) {uupath.push(uploadfile);}
+    if (!/image\/\w+/.test(FileData.type)) {uupath[7]=uploadfile;}
     else {
         let upreader = new FileReader();
         upreader.readAsDataURL(FileData);
         upreader.onload = function (e) {
-            uupath.push(this.result);
+            uupath[7]=this.result;
         }
     }
 }).on("change", "#attachment_9", function (e) {
     let FileData = e.target.files[0];
-    if (!/image\/\w+/.test(FileData.type)) {uupath.push(uploadfile);}
+    if (!/image\/\w+/.test(FileData.type)) {uupath[8]=uploadfile;}
     else {
         let upreader = new FileReader();
         upreader.readAsDataURL(FileData);
         upreader.onload = function (e) {
-            uupath.push(this.result);
+            uupath[8]=this.result;
         }
     }
 }).on("change", "#attachment_10", function (e) {
     let FileData = e.target.files[0];
-    if (!/image\/\w+/.test(FileData.type)) {uupath.push(uploadfile);}
+    if (!/image\/\w+/.test(FileData.type)) {uupath[9]=uploadfile;}
     else {
         let upreader = new FileReader();
         upreader.readAsDataURL(FileData);
         upreader.onload = function (e) {
-            uupath.push(this.result);
+            uupath[9]=this.result;
         }
     }
 }).on("click", "#att_span1 .abtn", function (e) {
