@@ -14,6 +14,9 @@
 
 ## 功能一览
 
+### 实时HTML编辑模式
+![image](https://user-images.githubusercontent.com/35645329/182267648-8a4133ed-52b4-49f1-83df-2006bc868109.png)
+
 ### 自由选择启用在线表情贴纸源
 
 ![image](https://user-images.githubusercontent.com/35645329/181614422-8c38e8ee-3465-4ef7-8d2e-862c692230b8.png)
