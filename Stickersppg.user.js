@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        表情贴纸增强插件
 // @namespace   https://github.com/HazukiKaguya/Stickers_PlusPlus
-// @version     1.99.1
+// @version     2.0.0
 // @author      HazukiKaguya
 // @description 回复表情，插图扩展插件，在发帖时快速输入自定义表情和论坛BBCODE
 // @icon        https://sticker.inari.site/favicon.ico
@@ -18,9 +18,9 @@
 // @grant       GM_setValue
 // @grant       GM_deleteValue
 // @run-at      document-end
-// @license     MIT License
+// @license      MIT License
 // @require     https://cdn.jsdelivr.net/npm/jquery@2.2.4/dist/jquery.min.js
-// @updateURL   https://github.com/HazukiKaguya/Stickers_PlusPlus/raw/master/Stickersppg.user.js
+// @updateURL   https://github.com/HazukiKaguya/Stickers_PlusPlus/raw/master/Stickerstickerpp.user.js
 // ==/UserScript==
 // 特别感谢：eddie32 https://greasyfork.org/users/5415-eddie32 & 喵拉布丁 https://github.com/miaolapd
 // 更新日志：https://github.com/HazukiKaguya/Stickers_PlusPlus#%E6%9B%B4%E6%96%B0%E8%AE%B0%E5%BD%95
@@ -41,26 +41,31 @@ const isKfMobile = typeof Info !== 'undefined' && typeof Info.imgPath !== 'undef
 const mbcheck = ["&mobile=2", "/simple/"]; let sMobile = false;
 for (let i = 0; i < mbcheck.length; i++) { if (window.location.href.indexOf(mbcheck[i]) > -1) { sMobile = true; break; } }
 const isMobile = sMobile;
+
+// 检测多重引用
+const mqcheck = ["&multiquote"]; let isMQ = false;
+for (let i = 0; i < mqcheck.length; i++) { if (window.location.href.indexOf(mqcheck[i]) > -1) { isMQ = true; } }
 // 默认配置&载入个性化配置
 const defaultSConf = {
-    "version": "1.99",
+    "version": "2.0.0",
     "kanbansize": "64",
     "kanbanimg": "https://sticker.inari.site/truenight.gif",
     "imgapi": "https://up.inari.site/api/v1/",
     "cloudapi": "https://api.inari.site/?s=App.User.",
     "onlineraw": "https://api.inari.site/?s=App.Sticker.",
     "notauthed": false,
+    "realedit": false,
     "markdown": false,
     "lcimglists": false,
     "olimglists": []
 };
-let loadcustom = true, customize;
-if (!localStorage.StickerConf) { loadcustom = false; customize = defaultSConf; }
-else { customize = JSON.parse(localStorage.StickerConf); }
-if (loadcustom == false) {
+let loadcustom = true, customize = defaultSConf;
+if (!localStorage.StickerConf) {
+    loadcustom = false;
     localStorage.setItem('StickerConf', JSON.stringify(defaultSConf));
 }
-else if (customize.version != defaultSConf.version) {
+else { customize = JSON.parse(localStorage.StickerConf); };
+if (customize.version != defaultSConf.version) {
     console.log("个性化配置版本不匹配，自动进行兼容性变更！");
     customize.version = defaultSConf.version;
     if (!customize.kanbanimg) customized.kanbanimg = defaultSConf.kanbanimg;
@@ -69,6 +74,7 @@ else if (customize.version != defaultSConf.version) {
     if (!customize.cloudapi) customize.cloudapi = defaultSConf.cloudapi;
     if (!customize.onlineraw) customize.onlineraw = defaultSConf.onlineraw;
     if (!customize.notauthed) customize.notauthed = defaultSConf.notauthed;
+    if (!customize.realedit) customize.realedit = defaultSConf.realedit;
     if (!customize.markdown) customize.markdown = defaultSConf.markdown;
     if (!customize.lcimglists) customize.lcimglists = defaultSConf.lcimglists;
     if (!customize.olimglists) customize.olimglists = defaultSConf.olimglists;
@@ -77,6 +83,8 @@ else if (customize.version != defaultSConf.version) {
     console.log("兼容性变更完成！");
 }
 const imgapi = customize.imgapi, cloudapi = customize.cloudapi;
+let realedit = customize.realedit, realeditcheck = '';
+if (realedit && isMQ == false) { realeditcheck = 'checked' }
 // 贴纸数据源
 let LocalRaws = [
     { "id": 1, "desc": "AC娘表情贴纸，属于AcSmileList，AC娘。", "cover": "https://sticker.inari.site/acfun/1/1.png", "name": "_Acfun", "title": 'AC娘', "addr": "_AcSmileList", "numstart": [1, 1001, 2001], "numend": [55, 1041, 2056], "url1": ["https://sticker.inari.site/acfun/1/", "https://sticker.inari.site/acfun/2/", "https://sticker.inari.site/acfun/3/"], "url2": [".png", ".png", ".png"] },
@@ -90,25 +98,28 @@ let LocalRaws = [
     { "id": 9, "desc": "公主连结Re:Dive。いま、新たな冒険の幕が上がる——", "cover": "https://sticker.inari.site/redive/sticker (1).png", "name": "_Redive", "title": 'PCR', "addr": "_RediveSmileList", "numstart": [1], "numend": [49], "url1": ["https://sticker.inari.site/redive/sticker ("], "url2": [").png"] },
     { "id": 10, "desc": "BanG Dream！噜~ キラキラ☆ドキドキ~ ふえぇ~", "cover": "https://sticker.inari.site/bangdream/bangdream (1).png", "name": "_Bandori", "title": '邦邦', "addr": "_BandoriSmileList", "numstart": [1], "numend": [41], "url1": ["https://sticker.inari.site/bangdream/bangdream ("], "url2": [").png"] },
 ];
-!localStorage.onlineraws ? OnlineRaws = [] : OnlineRaws = JSON.parse(localStorage.onlineraws);
+let OnlineRaws = [];
+if (localStorage.onlineraws) { OnlineRaws = JSON.parse(localStorage.onlineraws); }
 const FinalList = [], FinalRaw = [];
-// 实验性功能，此储存桶地址的表情贴纸很可能和修复后的表情贴纸并不能一一对应。
-let x = document.getElementsByTagName("img"); let afdDate = new Date();
-for (let i = 0; i < x.length; i++) {
-    x[i].src = x[i].src.replace(/mistake.tech\/emote/g, "sticker.inari.site");
-    x[i].src = x[i].src.replace(/http:\/\/o6smnd6uw.bkt.clouddn.com\/xds3\/akari/g, "https://sticker.inari.site/akarin/akarin");
-    x[i].src = x[i].src.replace(/http:\/\/o6smnd6uw.bkt.clouddn.com\/xds\/2233/g, "https://sticker.inari.site/bili/2233");
-    x[i].src = x[i].src.replace(/http:\/\/o6smnd6uw.bkt.clouddn.com\/lovelive\/Lovelive2nd/g, "https://sticker.inari.site/lovelive/Lovelive2nd");
-    x[i].src = x[i].src.replace(/http:\/\/smilell2.eclosionstudio.com\/Small\/Lovelive2nd/g, "https://sticker.inari.site/lovelive/Lovelive2nd");
-}
 // 在KF论坛，直接显示表情贴纸增强插件所属域名的图片，而不是显示【请手动点击打开本图片】
-document.body.querySelectorAll('.readtext a').forEach(i => {
-    if (i.innerHTML === '<span class=\"k_f18\">请手动点击打开本图片</span>') {
-        let p = document.createElement("img"); p.src = i.href;
-        if (p.src.match(/https:\/\/sticker.inari.site/)) { i.parentElement.replaceChild(p, i); }
-        else if (p.src.match(/http:\/\/tb2.bdstatic.com\/tb\/editor\/images\/face/)) { i.parentElement.replaceChild(p, i); }
+// 实验性功能，在KF论坛修复旧的失效的表情贴纸的显示。
+if (isKF == true) {
+    let x = document.getElementsByTagName("img");
+    for (let i = 0; i < x.length; i++) {
+        x[i].src = x[i].src.replace(/mistake.tech\/emote/g, "sticker.inari.site");
+        x[i].src = x[i].src.replace(/http:\/\/o6smnd6uw.bkt.clouddn.com\/xds3\/akari/g, "https://sticker.inari.site/akarin/akarin");
+        x[i].src = x[i].src.replace(/http:\/\/o6smnd6uw.bkt.clouddn.com\/xds\/2233/g, "https://sticker.inari.site/bili/2233");
+        x[i].src = x[i].src.replace(/http:\/\/o6smnd6uw.bkt.clouddn.com\/lovelive\/Lovelive2nd/g, "https://sticker.inari.site/lovelive/Lovelive2nd");
+        x[i].src = x[i].src.replace(/http:\/\/smilell2.eclosionstudio.com\/Small\/Lovelive2nd/g, "https://sticker.inari.site/lovelive/Lovelive2nd");
     }
-});
+    document.body.querySelectorAll('.readtext a').forEach(i => {
+        if (i.innerHTML === '<span class=\"k_f18\">请手动点击打开本图片</span>') {
+            let p = document.createElement("img"); p.src = i.href;
+            if (p.src.match(/https:\/\/sticker.inari.site/)) { i.parentElement.replaceChild(p, i); }
+            else if (p.src.match(/http:\/\/tb2.bdstatic.com\/tb\/editor\/images\/face/)) { i.parentElement.replaceChild(p, i); }
+        }
+    });
+}
 // 复用字符串
 const
     notbindText = "图片上传将使用游客上传！已登录，现在你可以进行同步操作了！",
@@ -117,7 +128,7 @@ const
     guestupimgText = "游客上传成功！建议绑定up.inari.site图床账号到云同步账号！",
     kanbanerrText = "当前存在多个文本区，无法确认上传区域，看板娘点击上传暂不可用！",
     resText = "已重置，请刷新！",
-    updatelog = 'V1.99 : 支持所见即所得模式下插入表情，支持markdown语法，修复若干bug。'
+    updatelog = 'V2.0.0 : 为不支持所见即所得模式的论坛添加实时编辑模式，修复若干bug。'
     ;
 
 
@@ -217,12 +228,9 @@ else if (!isKF) {
 };
 
 MenuList['Markdown'] = {
-    datatype: 'code', title: 'M↓', desc: 'Markdown语法，如需全局更换为markdown请前往【自定义】-》【个性设置】，勾选【使用Markdown取代BBcode】',
+    datatype: 'plain', title: 'M↓', desc: 'Markdown语法，如需全局更换为markdown请前往【自定义】-》【个性设置】，勾选【使用Markdown取代BBcode】',
     addr: [
-        '>  ', '**', '****', '---', '~~~~', '<u></u>', '``', '[]()', '![]()', '#  '
-    ],
-    haddr: [
-        '> ', '<em></em>', '****', '---', '~~~~', '<u></u>', '``', '[]()', '![]()', '#  '
+        '> ', '**', '****', '---', '~~~~', '<u></u>', '``', '[]()', '![]()', '# '
     ],
     ref: [
         '引用', '斜体', '粗体', '分割线', '删除线', '下划线', '代码', '链接', '图片', '标题'
@@ -286,20 +294,15 @@ const addCode = function (textArea, code, selText = '') {
  * @param {string} code Html文本
  */
 const addHCode = function (code) {
-    if (rhview == true) {
-        let target1 = document.createTextNode("\u0001");
-        $realtimeView[0].contentWindow.document.getSelection().getRangeAt(0).insertNode(target1);
-        let position = $realtimeView[0].contentWindow.document.body.innerHTML.indexOf("\u0001");
-        target1.parentNode.removeChild(target1);
-        if (position > 0) {
-            let target = $realtimeView[0].contentWindow.document.createElement("nobr");
-            target.innerHTML = code;
-            $realtimeView[0].contentWindow.document.getSelection().getRangeAt(0).insertNode(target);
-        }
-        else {
-            $realtimeView[0].contentWindow.document.body.innerHTML += code;
-        }
+    let target1 = document.createTextNode("\u0001");
+    $realtimeView.getSelection().getRangeAt(0).insertNode(target1);
+    let position = $realtimeView.body.innerHTML.indexOf("\u0001");
+    target1.parentNode.removeChild(target1);
+    if (position > 0) {
+        let target = $realtimeView.createElement("nobr"); target.innerHTML = code;
+        $realtimeView.getSelection().getRangeAt(0).insertNode(target);
     }
+    else { $realtimeView.body.innerHTML += code; }
 };
 
 
@@ -341,10 +344,6 @@ const getSmilePanelHtml = function (key) {
         else if (data.datatype === 'plain') {
             let ref = typeof data.ref !== 'undefined' && typeof data.ref[i] !== 'undefined' ? data.ref[i] : data.addr[i];
             html += `<a class="stickerpp-smile-text" data-code="${data.addr[i]}"  href="#">${ref}</a>`;
-        }
-        else if (data.datatype === 'code') {
-            let ref = typeof data.ref !== 'undefined' && typeof data.ref[i] !== 'undefined' ? data.ref[i] : data.addr[i];
-            html += `<a class="stickerpp-smile-text" data-code="${data.addr[i]}"  data-hcode="${data.haddr[i]}"  href="#">${ref}</a>`;
         }
     }
     return `<div class="stickerpp-smile-panel" data-key="${key}">${html}</div>`;
@@ -455,14 +454,16 @@ $(document).on("click", "#StickerPP-shop-dialog .sticker-item", function (e) {
 });
 // 表情菜单
 const createContainer = function (textArea, qufen) {
-    let $container = $(`<div class="stickerpp-container"><div class="stickerpp-menu">
-    <input type= "file"  class="stickerpp-user-p" id="stickerpp-user-p${qufen}" accept="image/*" style="display:none" >
+    let $container = $(`<div class="stickerpp-container">
+    <div class="stickerpp-menu" id="smilepndw${qufen}" style="text-align:left;">
+    <input type= "file"  class="stickerpp-user-p" id="stickerpp-user-p${qufen}" accept="image/*" style="display:none;" >
     <input type="button" class="stickerpp-user-t" value="上传图片" ${KFstyle}>
     <input type="button" class="stickerpp-user-y" value="云同步">
     <input type="button" class="stickerpp-user-i" value="自定义">
     <input type="button" class="stickerpp-user-g" value="表情组设置">&nbsp;
     <span class="stickerpp-close-panel" title="表情增强插件，版本${defaultSConf.version}，理论支持所有存在纯文本模式且支持BBcode的支持图片外链的论坛。本次更新日志：${updatelog}" style="cursor: pointer;"><b>⑨</b></span>
-    ${getSubMenuHtml()}<span class="stickerpp-close-panel">[-]</span>&nbsp;
+    ${getSubMenuHtml()}<span class="stickerpp-close-panel">[-]</span>&nbsp;<input type="checkbox" class="realeditclick" id="realedit${qufen}" value="realedit" ${realeditcheck}>可视化编辑
+
     <div class="stickerpp-diy-panel" style="display:none">
     <input type="button" class="stickerpp-user-c" value="添加贴纸">&nbsp;
     <input type="button" class="stickerpp-user-r" value="导出贴纸">&nbsp;
@@ -479,8 +480,8 @@ const createContainer = function (textArea, qufen) {
     <li><input type="checkbox" class="confbt" id="writeable${qufen}" value="writeable"><span style="cursor: help;color:red" title="请确定你知道你在做什么！在此修改（特别是增加！）已选在线贴纸组ID数组可能会发生不可预知的错误！">编辑ID数组【!】</span>
     <input type="checkbox" class="confbt" id="markdown${qufen}" value="markdown">使用Markdown取代BBcode&nbsp;
     <input type="checkbox" class="confbt" id="notauthed${qufen}" value="auth">显示未经验证的数据源</li>
-    </td></tr></table>
-    </div></div><div class="stickerpp-acc-panel" style="display:none">
+    </td></tr></table></div></div>
+    <div class="stickerpp-acc-panel" style="display:none">
     <input type="button" class="stickerpp-user-reg" value="注册">&nbsp;
     <input type="button" class="stickerpp-user-log" value="登录">&nbsp;
     <input type="button" class="stickerpp-user-img" value="绑定图床">&nbsp;
@@ -502,40 +503,100 @@ const createContainer = function (textArea, qufen) {
     <td><li><input type="checkbox" class="locbt" id="ng${qufen}8" value="8">公主链接R</li></td>
     <td><li><input type="checkbox" class="locbt" id="ng${qufen}7" value="7">少女歌剧</li></td>
     <td><li><input type="checkbox" class="locbt" id="ng${qufen}5" value="5">小红豆</li></td>
-    <td><input type="button" class="stickerpp-loc-close"value="关闭列表"></td></tr>
-    </table></div></div></div></div>`).insertBefore($(textArea));
+    <td><input type="button" class="stickerpp-loc-close"value="关闭列表" ></td></tr>
+    </table></div></div></div>
+
+    <div class="StickerPPHtmlEditerP" id="Htmlediterpannel${qufen}" style="display:none;text-align:left;width=100%" >
+    <div class="StickerPPHtmlediterF" id="Htmlediter${qufen}">
+        <button class="Heditm" data-edit="undo" title="撤销(Ctrl+Z)">↩️</button>
+        <button class="Heditm" data-edit="redo" title="重做(Ctrl+Y)">↪️</button>
+        <button class="Heditms" id="HEDurl" title="插入链接">🔗</button>
+        <button class="Heditms" id="HEDimg" title="插入图片">🖼️</button>
+        <button class="Heditms" id="HEDaudio" title="插入HTML5音频">🎵</button>
+        <button class="Heditms" id="HEDvideo" title="插入HTML5视频">🎞️</button>
+        <button class="Heditm" data-edit="quote" title="插入引用内容">💬</button>
+        <button class="Heditm" data-edit="code" title="插入代码内容" >📄</button>
+        <button class="Heditm" data-edit="hide" title="插入隐藏内容">💡</button>
+        <button class="Heditm" data-edit="sell" title="插入出售内容">🪙</button>
+        <button class="Heditm" data-edit="bold" title="粗体"><b>B</b></button>
+        <button class="Heditm" data-edit="italic" title="斜体"><i><b>I</b></i></button>
+        <button class="Heditm" data-edit="underline" title="下划线"><u><b>U</b></u></button>
+        <button class="Heditm" data-edit="strikeThrough" title="删除线"><s><b>A</b></s></button>
+        <button class="Heditm" data-edit="hr" title="插入水平线" ><b>一</b></button>
+        <input  class="Heditms" type='color' onblur="document.execCommand('forecolor',false,this.value)" title="字体颜色">
+        <input  class="Heditms" type='color' onblur="document.execCommand('backcolor',false,this.value)" title="背景颜色">
+        <button class="Heditm" data-edit="justifyLeft" title="左对齐"><b>⤆</b></button>
+        <button class="Heditm" data-edit="justifyCenter" title="居中"><b>⟺</b></button>
+        <button class="Heditm" data-edit="justifyRight" title="右对齐"><b>⤇</b></button>
+        <button class="Heditm" data-edit="Subscript" title="下标">X<b>,</b></button>
+        <button class="Heditm" data-edit="Superscript" title="上标">X<b>'</b></button>
+        <span title="字体大小设置">
+        <button class="Heditm" data-edit="fontSize:1">s</button>
+        <button class="Heditm" data-edit="fontSize:3">M</button>
+        <button class="Heditm" data-edit="fontSize:5">L</button>
+        <button class="Heditm" data-edit="fontSize:7"><b>L</b></button>
+      </span>
+        <button class="Heditm" data-edit="removeFormat" title="清除选中文本的格式"><b>⨯</b></button>
+        
+            
+    </div>
+    <div class="StickerPPHtmlEditer" id="Htmleditarea${qufen}" contenteditable="true" spellcheck="false" style="height: 300px;overflow:auto;background:white;border:1px dashed #000;outline:none;margin: 0px; height: 300px;margin: 0px; " ></div>
+
+    </div>
+
+    </div>`).insertBefore($(textArea));
     if (isKfMobile == true) {
         $(`<button class="btn btn-secondary upload-image-btn ml-1" title="上传图片" onclick="$('.stickerpp-user-p').click();">
             <i class="fa fa-picture-o" aria-hidden="true"></i>上传图片</button>`).insertAfter($("#smileDropdownBtn"));
     }
     else if (isKF == true) { $(`<a>&nbsp;</a><input type="button" class="stickerpp-user-pt" value="上传图片" onclick="$('.stickerpp-user-p').click();">`).insertAfter($('[name="Submit"][value!="全站搜索"]')); }
+    if (realedit == true && rhview == false && isMQ == false) {
+        let $realP = $container.find(`#Htmlediterpannel${qufen}`), $realPHE = $container.find(`#Htmleditarea${qufen}`);
+        $realPHE[0].innerHTML = bb2html(textArea.value);
+        if ($('#spp-reply-textarea').length > 0) {
+            $realPHE[0].innerHTML = bb2html($('#spp-reply-textarea')[0].value);
+        }
+        $realP.show(); $('textarea').hide();$('#editor-button').hide();
+
+    }
+    else if (realedit == false && rhview == false) {
+        let $realP = $container.find(`#Htmlediterpannel${qufen}`).hide(), $realPHE = $container.find(`#Htmleditarea${qufen}`);
+        $realPHE[0].innerHTML = bb2html(textArea.innerHTML);
+        if ($('#spp-reply-textarea').length > 0) {
+            $realPHE[0].innerHTML = bb2html($('#spp-reply-textarea')[0].value);
+        }
+        $realP.show(); $realP.hide();
+    }
     $container.on('click', '.stickerpp-sub-menu', function (e) {
         e.preventDefault();
         $container.find('.stickerpp-acc-panel').hide();
         $container.find('.stickerpp-bqz-panel').hide();
-        let $this = $(this);
-        let key = $this.data('key');
+        let $this = $(this), key = $this.data('key');
         if (!key) return;
         $container.find('.stickerpp-sub-menu').removeClass('stickerpp-sub-menu-active');
         $this.addClass('stickerpp-sub-menu-active');
         $container.find('.stickerpp-smile-panel').hide();
         let $panel = $container.find(`.stickerpp-smile-panel[data-key="${key}"]`);
-        if ($panel.length > 0) $panel.show();
-        else $(getSmilePanelHtml(key)).appendTo($container).show();
+        if ($panel.length > 0) { $panel.show(); }
+        else {
+            $('#smilepndw' + qufen).append($(getSmilePanelHtml(key))).show();
+            let $panels = $container.find(`.stickerpp-smile-panel[data-key="${key}"]`);
+            $panels.show();
+        }
     }).on('click', '.stickerpp-smile, .stickerpp-smile-text', function (e) {
         e.preventDefault();
-        let $this = $(this);
-        let code = $this.data('code'), hcode = $this.data('hcode');
-        if (customize.markdown == false) {
-            if (!code) code = `[img]${$this.attr('src')}[/img]`;
-            addCode(textArea, code);
+        let $this = $(this), code = $this.data('code');
+        if (rhview == false && realedit == true) {
+            if (!code) { document.execCommand('insertImage', false, $this.attr('src')); }
+            else { document.execCommand('insertText', false, code); }
         }
-        else if (customize.markdown == true) {
-            if (!code) code = `![](${$this.attr('src')})`;
-            addCode(textArea, code);
+        else if (rhview == false && realedit == false) {
+            if (customize.markdown == false) { if (!code) code = `[img]${$this.attr('src')}[/img]`; addCode(textArea, code); }
+            else if (customize.markdown == true) { if (!code) code = `![](${$this.attr('src')})`; addCode(textArea, code); }
         }
-        if (!hcode) hcode = `<img src="${$this.attr('src')}" border="0" alt="" style="max-width:400px"></img>`;
-        addHCode(hcode);
+        else if (rhview == true) {
+            if (!code) code = `<img src="${$this.attr('src')}" border="0" alt="" style="max-width:400px"></img>`; addHCode(code);
+        }
         if (/(Mobile|MIDP)/i.test(navigator.userAgent)) textArea.blur();
         else textArea.focus();
     }).on('mouseenter', '.stickerpp-smile', function () {
@@ -687,6 +748,88 @@ const createContainer = function (textArea, qufen) {
         localStorage.setItem('imgpvpc', JSON.stringify(["5px", "100px"]));
         sessionStorage.removeItem('localSmile'); sessionStorage.removeItem('OnlineSmile');
         alert("已重置，请刷新！");
+    }).on('click', '.Heditm', function (e) {
+        e.preventDefault();
+        const cmd_val = this.getAttribute("data-edit").split(":");
+        let CQSHcon = false;
+        if (window.getSelection) {
+            CQSHcon = window.getSelection().toString();
+        }
+        if (cmd_val[0] == 'hr') {
+            document.execCommand("insertHTML", false, "<hr>");
+        }
+        else if (cmd_val[0] == 'code' || cmd_val[0] == 'quote') {
+            if (CQSHcon == false) {
+                document.execCommand("insertHTML", false, `<br><fieldset><legend>${cmd_val[0]}:</legend>此处输入${cmd_val[0]}内容</fieldset><br>`);
+            }
+            else {
+                document.execCommand("insertHTML", false, `<br><fieldset><legend>${cmd_val[0]}:</legend>${CQSHcon}</fieldset><br>`);
+            }
+        }
+        else if (cmd_val[0] == 'sell') {
+            if (CQSHcon == false) {
+                document.execCommand("insertHTML", false, `<br><fieldset><legend>${cmd_val[0]}=10</legend>此处输入${cmd_val[0]}内容</fieldset><br>`);
+            }
+            else {
+                document.execCommand("insertHTML", false, `<br><fieldset><legend>${cmd_val[0]}=10</legend>${CQSHcon}</fieldset><br>`);
+            }
+        }
+        else if (cmd_val[0] == 'hide') {
+            if (CQSHcon == false) {
+                document.execCommand("insertHTML", false, `<br><fieldset><legend>${cmd_val[0]}=300</legend>此处输入${cmd_val[0]}内容</fieldset><br>`);
+            }
+            else {
+                document.execCommand("insertHTML", false, `<br><fieldset><legend>${cmd_val[0]}=300</legend>${CQSHcon}</fieldset><br>`);
+            }
+        }
+        else { document.execCommand(cmd_val[0], false, cmd_val[1]); }
+    }).on('click', '#HEDurl', function (e) {
+        e.preventDefault(); let URLcon = false;
+        if (window.getSelection) { URLcon = window.getSelection().toString(); }
+        if (URLcon == false) {
+            let HEDurl = prompt("请输入要插入的url", 'https://');
+            if (HEDurl) {
+                let HEDurlT = prompt("请输入插入的url的描述文字，否则默认使用url作为描述文字", '');
+                if (HEDurlT) {
+                    if (HEDurlT.length > 2) {
+                        document.execCommand("insertHTML", false, '<a href="' + HEDurl + '">' + HEDurlT + '</a>');
+                    } else { document.execCommand('CreateLink', HEDurl, HEDurl) }
+                } else { document.execCommand('CreateLink', HEDurl, HEDurl) }
+            }
+        }
+        else {
+            let HEDurlTU = prompt("请输入要插入的url，否则默认使用选中文本作为url链接", '');
+            if (HEDurlTU) {
+                if (HEDurlTU.length > 2) {
+                    console.log(HEDurlTU)
+                    document.execCommand('CreateLink', URLcon, HEDurlTU)
+                } else { document.execCommand('CreateLink', URLcon, URLcon) }
+            } else { document.execCommand('CreateLink', URLcon, URLcon) }
+        }
+    }).on('click', '#HEDimg', function (e) {
+        e.preventDefault();
+        let HEDimg = prompt("请输入要插入的图片url", 'https://');
+        document.execCommand("insertHTML", false, '<img src="' + HEDimg + '" border="0">');
+    }).on('click', '#HEDaudio', function (e) {
+        e.preventDefault();
+        let HEDaudio = prompt('请输入HTML5音频实际地址：\n（可直接输入网易云音乐的单曲地址，喵拉将自动转换为外链地址）', 'https://');
+        if (HEDaudio) {
+            let matches = /^https?:\/\/music\.163\.com\/(?:#\/)?song\?id=(\d+)/i.exec(HEDaudio);
+            if (matches) HEDaudio = `https://music.miaola.work/163/${matches[1]}.mp3`;
+            matches = /^https?:\/\/www\.xiami\.com\/song\/(\w+)/i.exec(HEDaudio);
+            if (matches) HEDaudio = `https://music.miaola.work/xiami/${matches[1]}.mp3`;
+            document.execCommand("insertHTML", false, `<audio src="${HEDaudio}" controls="" preload="none" style="margin: 3px 0;">[你的浏览器不支持audio标签]</audio><br>`);
+        }
+    }).on('click', '#HEDvideo', function (e) {
+        e.preventDefault();
+        let HEDvideo = prompt('请输入HTML5视频实际地址：\n（可直接输入YouTube视频页面的地址，喵拉将自动转换为外链地址）', 'https://');
+        if (HEDvideo) {
+            let matches = /^https?:\/\/(?:www\.)?youtube\.com\/watch\?v=([\w\-]+)/i.exec(HEDvideo);
+            if (matches) HEDvideo = `https://video.miaola.work/youtube/${matches[1]}`;
+            matches = /^https?:\/\/youtu\.be\/([\w\-]+)$/i.exec(HEDvideo);
+            if (matches) HEDvideo = `https://video.miaola.work/youtube/${matches[1]}`;
+            document.execCommand("insertHTML", false, `<video src="${HEDvideo}" controls="" preload="none" style="margin: 3px 0;">[你的浏览器不支持video标签]</video><br>`);
+        }
     }).on('click', '#notauthed' + qufen, function (e) {
         customize.notauthed = e.target.checked;
         localStorage.setItem('StickerConf', JSON.stringify(customize));
@@ -695,6 +838,72 @@ const createContainer = function (textArea, qufen) {
         localStorage.setItem('StickerConf', JSON.stringify(customize));
     }).on('click', '#writeable' + qufen, function (e) {
         e.target.checked ? $("#olimglists" + qufen).attr("disabled", false) : $("#olimglists" + qufen).attr("disabled", true);
+    }).on('click', '#realedit' + qufen, function (e) {
+        let $panel = $(`#Htmlediterpannel${qufen}`);
+        if (rhview == false) {
+            let $tempRHArea = $container.find(`#Htmleditarea${qufen}`);
+            if (e.target.checked) {
+                TeContent = bb2html(textArea.value);
+                $tempRHArea[0].innerHTML = TeContent;
+                if ($('#spp-reply-textarea').length > 0) {
+                    let spptextarea = $('#spp-reply-textarea'), sppcontent = bb2html(spptextarea[0].value);
+                    $tempRHArea[0].innerHTML = sppcontent;
+                }
+                $panel.show(); $('textarea').hide();$('#editor-button').hide(); customize.realedit = true, realedit = true;
+                localStorage.setItem('StickerConf', JSON.stringify(customize));
+            }
+            else {
+                if (realedits == false) {
+                    realedits = true;
+                    $('textarea').show();$('#editor-button').show();
+                    customize.realedit = false;
+                    localStorage.setItem('StickerConf', JSON.stringify(customize));
+                }
+                else {
+                    $('textarea').show();$('#editor-button').show();
+                    let HeContent = html2bb($tempRHArea[0].innerHTML);
+                    textArea.innerHTML = HeContent;
+                    textArea.innerText = HeContent;
+                    textArea.value = HeContent;
+                    if ($('#spp-reply-textarea').length > 0) {
+                        let spptextarea = $('#spp-reply-textarea');
+                        spptextarea[0].innerHTML = HeContent;
+                        spptextarea[0].innerText = HeContent;
+                        spptextarea[0].value = HeContent
+                    }
+                    $panel.hide(); customize.realedit = false, realedit = false;
+                    localStorage.setItem('StickerConf', JSON.stringify(customize));
+                }
+            }
+        }
+        else if (rhview == true) {
+            alert('检测到当前页面自带可视化编辑器！请使用自带的可视化编辑器！');
+        }
+    }).on('blur', '#Htmleditarea' + qufen, function (e) {
+        let HeContent = html2bb(e.target.innerHTML);
+        textArea.innerHTML = HeContent;
+        textArea.innerText = HeContent;
+        textArea.value = HeContent;
+    }).on('keydown', '#Htmleditarea' + qufen, function (e) {
+        e.preventDefault();
+        if (e.keyCode === 13) {
+            document.execCommand('insertHTML', false, '<br>&zwnj;');
+        }
+    }).on('paste', '#Htmleditarea' + qufen, function (e) {
+        let isimg=event.clipboardData.files;
+        if(isimg.length>0)
+        {event.preventDefault();
+        const pd = event.clipboardData.items[0];
+        if (!(/^image\/[jpeg|png|gif|jpg]/.test(pd.type))) { return; }
+        const file = event.clipboardData.items[0].getAsFile()
+        // 让文件名使用时间戳
+        let name = JSON.stringify(new Date().getTime());
+        const files = new File([file], name + "." + file.name.substr(file.name.lastIndexOf('.') + 1), {
+            type: file.type, lastModified: file.lastModified,
+        });
+        let formData = new FormData(), reader = new FileReader(); formData.append('file', files);
+        reader.readAsDataURL(files); upimgfunc(formData, textArea);}
+        else;
     }).on('blur', '#kanbanimg' + qufen, function (e) {
         customize.kanbanimg = e.target.value;
         localStorage.setItem('StickerConf', JSON.stringify(customize));
@@ -729,26 +938,28 @@ const createContainer = function (textArea, qufen) {
     });
     // 文本区域直接上传图片并预览
     document.querySelector('textarea').addEventListener('paste', (event) => {
-        event.preventDefault();
-        // 修复粘贴文字功能
-        addCode(textArea, event.clipboardData.getData('text'));
-        const pd = event.clipboardData.items[0];
-        if (!(/^image\/[jpeg|png|gif|jpg]/.test(pd.type))) { return; }
-        const file = event.clipboardData.items[0].getAsFile()
-        // 让文件名使用时间戳
-        let name = JSON.stringify(new Date().getTime());
-        const files = new File([file], name + "." + file.name.substr(file.name.lastIndexOf('.') + 1), {
-            type: file.type, lastModified: file.lastModified,
-        });
-        let formData = new FormData(), reader = new FileReader(); formData.append('file', files);
-        reader.onload = function ({ target }) {
-            setTimeout(() => { $(".stickerppkanban").attr('src', target.result) }, 400)
-            setTimeout(() => {
-                if (isKfMobile == true) { $(".stickerppkanban").attr('src', 'https://sticker.inari.site/favicon.ico') }
-                else { $(".stickerppkanban").attr('src', customize.kanbanimg) }
-            }, 4000)
+        let isfiles = event.clipboardData.files;
+        if (isfiles.length > 0) {
+            event.preventDefault();
+            const pd = event.clipboardData.items[0];
+            if (!(/^image\/[jpeg|png|gif|jpg]/.test(pd.type))) { return; }
+            const file = event.clipboardData.items[0].getAsFile()
+            // 让文件名使用时间戳
+            let name = JSON.stringify(new Date().getTime());
+            const files = new File([file], name + "." + file.name.substr(file.name.lastIndexOf('.') + 1), {
+                type: file.type, lastModified: file.lastModified,
+            });
+            let formData = new FormData(), reader = new FileReader(); formData.append('file', files);
+            reader.onload = function ({ target }) {
+                setTimeout(() => { $(".stickerppkanban").attr('src', target.result) }, 400)
+                setTimeout(() => {
+                    if (isKfMobile == true) { $(".stickerppkanban").attr('src', 'https://sticker.inari.site/favicon.ico') }
+                    else { $(".stickerppkanban").attr('src', customize.kanbanimg) }
+                }, 4000)
+            }
+            reader.readAsDataURL(files); upimgfunc(formData, textArea);
         }
-        reader.readAsDataURL(files); upimgfunc(formData, textArea);
+        else;
     });
 };
 
@@ -757,6 +968,480 @@ const createContainer = function (textArea, qufen) {
  * 方法功能区
  * @param textArea 文本框
  */
+// 修复实时编辑模式下phpwind的回复某楼
+let realedits = true;
+function postreplys(txta, txtb) {
+    console.log('hi')
+    if (typeof document.FORM != "undefined") {
+        document.FORM.atc_content.focus();
+        document.FORM.atc_content.innerHtml = '[quote]' + txta + '[/quote]\r\n';
+        document.FORM.diy_guanjianci.value = txtb;
+    }
+}
+$(document).on('click', "a[title='回复此楼']", function (e) {
+    let rpstr=e.target.getAttribute("onclick");
+    rpstr=rpstr.replace(/postreply\('*([^\'\"]*)','[^\'\"]*'\);/g, '$1');
+    $('.StickerPPHtmlEditer')[0].innerHTML+=`<fieldset><legend>quote:</legend>${rpstr}</fieldset><br>`;
+});
+$(document).on('click', "a[title='多重回复']", function () {
+    if (realedit == true) { realedits = false; }
+    $('textarea').show(); $('.StickerPPHtmlEditerP').hide();
+});
+// html2bb&bb2html
+function html2bb(str) {
+    str = str.replace(/<img[^>]*smile=\"(\d+)\"[^>]*>/ig, '[s:$1]');
+    str = str.replace(/<img[^>]*type=\"(attachment|upload)\_(\d+)\"[^>]*>/ig, '[$1=$2]');
+    code_htm = new Array();
+    code_num = 0;
+    str = str.replace(/(\r\n|\n|\r)/ig, '');
+    str = str.replace(/<p[^>\/]*\/>/ig, '\n');
+    str = str.replace(/\son[\w]{3,16}\s?=\s*([\'\"]).+?\1/ig, '');
+    str = str.replace(/<fieldset><legend>(Quote|code):<\/legend>(.+?)<\/fieldset>/ig, '[$1]$2[/$1]');
+    str = str.replace(/<fieldset><legend>(sell|hide)=(.+?)<\/legend>(.+?)<\/fieldset>/ig, '[$1=$2]$3[/$1]');
+    str = str.replace(/<(audio|video)[^>]*src=[\'\"\s]*([^\'\"]*)[^>]*>(.+?)<\/(audio|video)>/ig, '[$1]$2[/$1]');
+    str = str.replace(/<(audio|video) src=[\'\"\s]*([^\'\"]*) controls="" preload="none" style="margin: 3px 0;">\[你的浏览器不支持(audio|video)标签\]<\/(audio|video)>/ig, '[$1]$2[/$1]');
+    str = str.replace(/<hr[^>]*>/ig, '[hr]');
+    str = str.replace(/<(sub|sup|u|strike|b|i|pre)>/ig, '[$1]');
+    str = str.replace(/<\/(sub|sup|u|strike|b|i|pre)>/ig, '[/$1]');
+    str = str.replace(/<(\/)?strong>/ig, '[$1b]');
+    str = str.replace(/<(\/)?em>/ig, '[$1i]');
+    str = str.replace(/<(\/)?blockquote([^>]*)>/ig, '[$1blockquote]');
+    str = str.replace(/<img[^>]*src=[\'\"\s]*([^\'\"]+)[^>]*>/ig, '[img]' + '$1' + '[/img]');
+    str = str.replace(/<a[^>]*href=[\'\"\s]*([^\'\"]*)[^>]*>(.+?)<\/a>/ig, '[url=$1]' + '$2' + '[/url]');
+    str = str.replace(/<h([1-6]+)([^>]*)>(.*?)<\/h\1>/ig, function ($1, $2, $3, $4) { return h($3, $4, $2); });
+    str = searchtag('table', str, 'table', 1);
+    str = searchtag('font', str, 'Font', 1);
+    str = searchtag('div', str, 'dsc', 1);
+    str = searchtag('p', str, 'p', 1);
+    str = searchtag('span', str, 'dsc', 1);
+    str = searchtag('ol', str, 'list', 1);
+    str = searchtag('ul', str, 'list', 1);
+    for (i in code_htm) {
+        str = str.replace("[\twind_phpcode_" + i + "\t]", code_htm[i]);
+    }
+    str = str.replace(/&nbsp;/ig, ' ');
+    str = str.replace(/<br[^>]*>/ig, '\n');
+    str = str.replace(/<[^>]*?>/ig, '');
+    str = str.replace(/&amp;/ig, '&');
+    str = str.replace(/&quot;/ig, '"');
+    str = str.replace(/&lt;/ig, '<');
+    str = str.replace(/&gt;/ig, '>');
+    return str;
+}
+function bb2html(str) {
+    code_htm = new Array();
+    code_num = 0;
+    str = str.replace(/&(?!(#[0-9]+|[a-z]+);)/ig, '&amp;');
+    str = str.replace(/</ig, '&lt;');
+    str = str.replace(/>/ig, '&gt;');
+    str = str.replace(/\n/ig, '<br />');
+    str = str.replace(/\[(quote|code)\](.+?)\[\/(quote|code)\]/ig, '<fieldset><legend>$1:</legend>$2</fieldset>');
+    str = str.replace(/\[(sell|hide)=(.+?)\](.+?)\[\/(sell|hide)\]/ig, '<fieldset><legend>$1=$2</legend>$3</fieldset>');
+    str = str.replace(/\[(audio|video)\](.+?)\[\/(audio|video)\]/ig, '<$1 src="$2" controls="" preload="none" style="margin: 3px 0;">[你的浏览器不支持$1标签]</$1>');
+    str = str.replace(/\[hr\]/ig, '<hr />');
+    str = str.replace(/\[\/(size|color|font|backcolor)\]/ig, '</font>');
+    str = str.replace(/\[(sub|sup|u|i|strike|b|blockquote|li)\]/ig, '<$1>');
+    str = str.replace(/\[(quote|code)\]/ig, '<fieldset><legend>$1:</legend>');
+    str = str.replace(/\[\/(quote|code)\]/ig, '</fieldset>');
+    str = str.replace(/\[\/(sub|sup|u|i|strike|b|blockquote|li)\]/ig, '</$1>');
+    str = str.replace(/\[size=(\d+?)\]/ig, '<font size="$1">');
+    str = str.replace(/\[color=([^\[\<]+?)\]/ig, '<font color="$1">');
+    str = str.replace(/\[backcolor=([^\[\<]+?)\]/ig, '<font style="background-color:$1">');
+    str = str.replace(/\[font=([^\[\<]+?)\]/ig, '<font face="$1">');
+    str = str.replace(/\[list=(a|A|1)\](.+?)\[\/list\]/ig, '<ol type="$1">$2</ol>');
+    str = str.replace(/\[(\/)?list\]/ig, '<$1ul>');
+    str = str.replace(/\[(attachment|upload)=(\d+)\]/ig, function ($1, $2, $3) { return attpath($3, $2); });
+    str = str.replace(/\[s:(\d+)\]/ig, function ($1, $2) { return smilepath($2); });
+    str = str.replace(/\[img\]([^\[]*)\[\/img\]/ig, '<img src="$1" border="0" />');
+    str = str.replace(/\[url=([^\]]+)\]([^\[]+)\[\/url\]/ig, '<a href="$1">' + '$2' + '</a>');
+    str = searchtag('table', str, 'tableshow', 2);
+    str = str.replace(/\[\/align\]/ig, '</p>');
+    str = str.replace(/\[(\/)?h([1-6])\]/ig, '<$1h$2>');
+    str = str.replace(/\[align=(left|center|right|justify)\]/ig, '<p align="$1">');
+    for (i in code_htm) {
+        str = str.replace("[\twind_phpcode_" + i + "\t]", code_htm[i]);
+    }
+    return str;
+}
+// 杂项
+let uupath=[];
+$("#attachment_1").change(function (e) {
+    let FileData = e.target.files[0];
+    if (!/image\/\w+/.test(FileData.type)) { return;}
+    else {
+        let upreader = new FileReader();
+        upreader.readAsDataURL(FileData);
+        upreader.onload = function (e) {
+            uupath[0] = this.result;
+        }
+    }
+});
+$("#attachment_2").change(function (e) {
+    let FileData = e.target.files[0];
+    if (!/image\/\w+/.test(FileData.type)) {return;}
+    else {
+        let upreader = new FileReader();
+        upreader.readAsDataURL(FileData);
+        upreader.onload = function (e) {
+            uupath[1] = this.result;
+        }
+    }
+});
+$("#attachment_3").change(function (e) {
+    let FileData = e.target.files[0];
+    if (!/image\/\w+/.test(FileData.type)) {return;}
+    else {
+        let upreader = new FileReader();
+        upreader.readAsDataURL(FileData);
+        upreader.onload = function (e) {
+            uupath[2] = this.result;
+        }
+    }
+});
+$("#attachment_4").change(function (e) {
+    let FileData = e.target.files[0];
+    if (!/image\/\w+/.test(FileData.type)) {return;}
+    else {
+        let upreader = new FileReader();
+        upreader.readAsDataURL(FileData);
+        upreader.onload = function (e) {
+            uupath[3] = this.result;
+        }
+    }
+});
+$("#attachment_5").change(function (e) {
+    let FileData = e.target.files[0];
+    if (!/image\/\w+/.test(FileData.type)) {return;}
+    else {
+        let upreader = new FileReader();
+        upreader.readAsDataURL(FileData);
+        upreader.onload = function (e) {
+            uupath[4] = this.result;
+        }
+    }
+});
+$("#attachment_6").change(function (e) {
+    let FileData = e.target.files[0];
+    if (!/image\/\w+/.test(FileData.type)) {return;}
+    else {
+        let upreader = new FileReader();
+        upreader.readAsDataURL(FileData);
+        upreader.onload = function (e) {
+            uupath[5] = this.result;
+        }
+    }
+});
+$("#attachment_7").change(function (e) {
+    let FileData = e.target.files[0];
+    if (!/image\/\w+/.test(FileData.type)) {return;}
+    else {
+        let upreader = new FileReader();
+        upreader.readAsDataURL(FileData);
+        upreader.onload = function (e) {
+            uupath[6] = this.result;
+        }
+    }
+});
+$("#attachment_8").change(function (e) {
+    let FileData = e.target.files[0];
+    if (!/image\/\w+/.test(FileData.type)) {return;}
+    else {
+        let upreader = new FileReader();
+        upreader.readAsDataURL(FileData);
+        upreader.onload = function (e) {
+            uupath[7] = this.result;
+        }
+    }
+});
+$("#attachment_9").change(function (e) {
+    let FileData = e.target.files[0];
+    if (!/image\/\w+/.test(FileData.type)) {return;}
+    else {
+        let upreader = new FileReader();
+        upreader.readAsDataURL(FileData);
+        upreader.onload = function (e) {
+            uupath[8] = this.result;
+        }
+    }
+});
+$("#attachment_10").change(function (e) {
+    let FileData = e.target.files[0];
+    if (!/image\/\w+/.test(FileData.type)) {return;}
+    else {
+        let upreader = new FileReader();
+        upreader.readAsDataURL(FileData);
+        upreader.onload = function (e) {
+            uupath[9] = this.result;
+        }
+    }
+});
+function attpath(attid, type) {
+    let path = '', upath = false;
+    if (type == 'attachment' && IsElement('atturl_' + attid)) {
+        path = getObj('atturl_' + attid).innerHTML;
+    }
+    else if (type == 'upload' && IsElement('attachment_' + attid)) {
+        let FileData = $('#attachment_' + attid)[0].files[0];
+        if (!/image\/\w+/.test(FileData.type)) {
+            return;
+        }
+        else {
+            path = uupath[attid-1];upath=true;
+            
+        }
+        //result.innerHTML = '<img src="'+this.result+'" alt=""/>';
+    }
+    if (!path) {
+        return '[' + type + '=' + attid + ']';
+    } 
+    else {
+        if (!path.match(/\.(jpg|gif|png|bmp|jpeg)$/ig)&&upath==false) {
+            path = imgpath + '/' + stylepath + '/file/zip.gif';
+        }
+        let img = imgmaxwh(path, 320);
+        if (img.width == 0) {
+            return '<img src="' + path + '" type="' + type + '_' + attid + '" width="' + "240" + '" />';
+        }
+        else { return '<img src="' + path + '" type="' + type + '_' + attid + '" width="' + img.width + '" />'; }
+    }
+}
+function imgmaxwh(url,maxwh) {
+	var img = new Image();
+	img.src = url;
+	if (img.width>maxwh || img.width>maxwh) {
+		img.width = (img.width/img.height)>1 ? maxwh : maxwh*img.width/img.height;
+	}
+	return img;
+}
+function smilepath(NewCode) {
+    if (isKF) {
+        let NewCodes = NewCode - 9;
+        let kfImgPath = typeof imgpath !== 'undefined' ? imgpath : '';
+        if (isKfMobile) kfImgPath = Info.imgPath;
+        if (NewCode < 19) {
+            return '<img src="/' + kfImgPath + '/post/smile/em/em0' + NewCodes + '.gif' + '" smile="' + NewCode + '" />';
+        }
+        else {
+            return '<img src="/' + kfImgPath + '/post/smile/em/em' + NewCodes + '.gif' + '" smile="' + NewCode + '" />';
+        }
+    }
+    else {
+        return '<img src="' + imgpath + '/post/smile/smallface/face' + NewCode + '.gif' + '" smile="' + NewCode + '" />';
+    }
+}
+function h(style, code, size) {
+    size = 7 - size;
+    code = '[size=' + size + '][b]' + code + '[/b][/size]';
+    return p(style, code);
+}
+function p(style, code) {
+    if (style.indexOf('align=') != -1) {
+        style = findvalue(style, 'align=');
+        code = '[align=' + style + ']' + code + '[/align]';
+    } else {
+        code += "\n";
+    }
+    return code;
+}
+function dsc(style, code) {
+    var styles = [
+        ['align', 1, 'align='],
+        ['align', 1, 'text-align:'],
+        ['backcolor', 2, 'background-color:'],
+        ['color', 2, 'color:'],
+        ['font', 1, 'font-family:'],
+        ['b', 0, 'font-weight:', 'bold'],
+        ['i', 0, 'font-style:', 'italic'],
+        ['u', 0, 'text-decoration:', 'underline'],
+        ['strike', 0, 'text-decoration:', 'line-through']
+    ];
+
+    style = style.toLowerCase();
+    for (var i = 0; i < styles.length; i++) {
+        var begin = style.indexOf(styles[i][2]);
+        if (begin == -1) {
+            continue;
+        }
+        var value = findvalue(style, styles[i][2]);
+        if (styles[i][1] == 2 && value.indexOf('rgb') != -1) {
+            value = WYSIWYD._colorToRgb(value);
+        }
+        if (styles[i][1] == 0) {
+            if (value == styles[i][3]) {
+                code = '[' + styles[i][0] + ']' + code + '[/' + styles[i][0] + ']';
+            }
+        } else {
+            code = '[' + styles[i][0] + '=' + value + ']' + code + '[/' + styles[i][0] + ']';
+        }
+        style = style.replace(styles[i][2], '');
+    }
+
+    return code;
+}
+function searchtag(tagname, str, action, type) {
+    if (type == 2) {
+        var tag = ['[', ']'];
+    } else {
+        var tag = ['<', '>'];
+    }
+    var head = tag[0] + tagname;
+    var head_len = head.length;
+    var foot = tag[0] + '/' + tagname + tag[1];
+    var foot_len = foot.length;
+    var strpos = 0;
+
+    do {
+        var strlower = str.toLowerCase();
+        var begin = strlower.indexOf(head, strpos);
+        if (begin == -1) {
+            break;
+        }
+        var strlen = str.length;
+
+        for (var i = begin + head_len; i < strlen; i++) {
+            if (str.charAt(i) == tag[1]) break;
+        }
+        if (i >= strlen) break;
+
+        var firsttag = i;
+        var style = str.substr(begin + head_len, firsttag - begin - head_len);
+
+        var end = strlower.indexOf(foot, firsttag);
+        if (end == -1) break;
+
+        var nexttag = strlower.indexOf(head, firsttag);
+        while (nexttag != -1 && end != -1) {
+            if (nexttag > end) break;
+            end = strlower.indexOf(foot, end + foot_len);
+            nexttag = strlower.indexOf(head, nexttag + head_len);
+        }
+        if (end == -1) {
+            strpos = firsttag;
+            continue;
+        }
+
+        firsttag++;
+        var findstr = str.substr(firsttag, end - firsttag);
+        str = str.substr(0, begin) + eval(action)(style, findstr, tagname) + str.substr(end + foot_len);
+        strpos = begin;
+
+    } while (begin != -1);
+
+    return str;
+}
+function tableshow(style, str) {
+    if (style.substr(0, 1) == '=') {
+        var width = style.substr(1);
+    } else {
+        var width = '100%';
+    }
+    str = str.replace(/\[td=(\d{1,2}),(\d{1,2})(,(\d{1,3}%?))?\]/ig, '<td colspan="$1" rowspan="$2" width="$4">');
+    str = str.replace(/\[(tr|td)\]/ig, '<$1>');
+    str = str.replace(/\[\/(tr|td)\]/ig, '</$1>');
+
+    return '<table width=' + width + ' class="t" cellspacing=0>' + str + '</table>';
+}
+function findvalue(style, find) {
+    var firstpos = style.indexOf(find) + find.length;
+    var len = style.length;
+    var start = 0;
+    for (var i = firstpos; i < len; i++) {
+        var t_char = style.charAt(i);
+        if (start == 0) {
+            if (t_char == '"' || t_char == "'") {
+                start = i + 1;
+            } else if (t_char != ' ') {
+                start = i;
+            }
+            continue;
+        }
+        if (t_char == '"' || t_char == "'" || t_char == ';') {
+            break;
+        }
+    }
+    return style.substr(start, i - start);
+}
+function table(style, str) {
+
+    str = str.replace(/<tr([^>]*)>/ig, '[tr]');
+    str = str.replace(/<\/tr>/ig, '[/tr]');
+    str = searchtag('td', str, 'td', 1);
+    str = searchtag('th', str, 'td', 1);
+
+    var styles = ['width=', 'width:'];
+    style = style.toLowerCase();
+
+    var s = '';
+    for (i in styles) {
+        if (style.indexOf(styles[i]) == -1) {
+            continue;
+        }
+        s = '=' + findvalue(style, styles[i]);
+        break;
+    }
+    return '[table' + s + ']' + str + '[/table]';
+}
+function td(style, str) {
+    if (style == '') {
+        return '[td]' + str + '[/td]';
+    }
+
+    var colspan = 1;
+    var rowspan = 1;
+    var width = '';
+    var value;
+
+    if (style.indexOf('colspan=') != -1) {
+        value = findvalue(style, 'colspan=');
+        if (value > 1) colspan = value;
+    }
+    if (style.indexOf('rowspan=') != -1) {
+        value = findvalue(style, 'rowspan=');
+        if (value > 1) rowspan = value;
+    }
+    if (style.indexOf('width=') != -1) {
+        width = findvalue(style, 'width=');
+    }
+    if (width == '') {
+        return (colspan == 1 && rowspan == 1 ? '[td]' : '[td=' + colspan + ',' + rowspan + ']') + str + '[/td]';
+    } else {
+        return '[td=' + colspan + ',' + rowspan + ',' + width + ']' + str + '[/td]';
+    }
+}
+function list(type, code, tagname) {
+    code = code.replace(/<(\/)?li>/ig, '[$1li]');
+    if (tagname == 'ul') {
+        return '[list]' + code + '[/list]';
+    }
+    if (type && type.indexOf('type=') != '-1') {
+        type = findvalue(type, 'type=');
+        if (type != 'a' && type != 'A' && type != '1') {
+            type = '1';
+        }
+        return '[list=' + type + ']' + code + '[/list]';
+    } else {
+        return '[list=1]' + code + '[/list]';
+    }
+}
+function Font(style, str) {
+    var styles = new Array();
+
+    styles = { 'size': 'size=', 'color': 'color=', 'font': 'face=', 'backcolor': 'background-color:' };
+    style = style.toLowerCase();
+
+    for (st in styles) {
+        var begin = style.indexOf(styles[st]);
+        if (begin == -1) {
+            continue;
+        }
+        var value = findvalue(style, styles[st]);
+        if (in_array(st, ['backcolor', 'color']) && value.indexOf('rgb') != -1) {
+            value = WYSIWYD._colorToRgb(value);
+        }
+        str = '[' + st + '=' + value + ']' + str + '[/' + st + ']';
+    }
+    return str;
+}
 // CURD方法
 function usercfunc() {
     let userimgc = prompt("请输入要添加的贴纸的URL，添加多个请用半角,隔开贴纸URL（添加后刷新页面生效）", "https://sticker.inari.site/inari.png");
@@ -1071,6 +1756,7 @@ function ctlfunc() {
 }
 // 上传图片方法
 function upimgfunc(formData, textArea) {
+    if(!textArea)textArea=$('textarea')[0];
     let authdata = localStorage.logindata;
     if (authdata == null) {
         $.ajax({ url: imgapi + 'upload', type: 'POST', dataType: 'json', data: formData, contentType: false, processData: false, })
@@ -1078,8 +1764,16 @@ function upimgfunc(formData, textArea) {
                 if (data.status == true) {
                     let inaridata = data.data, inarilinks = inaridata.links;
                     setTimeout(() => { alert(guestupimgText); }, 1000);
-                    addCode(textArea, inarilinks.bbcode);
-                    addHCode(`<img src="${inarilinks.url}" border="0" alt="" style="max-width:400px"></img>`);
+                    if (rhview == false && realedit == true) {
+                        document.execCommand('insertImage', false, inarilinks.url);
+                    }
+                    else if (rhview == false && realedit == false) {
+                        if (customize.markdown == false) { addCode(textArea, inarilinks.bbcode); }
+                        else if (customize.markdown == true) { addCode(textArea, `![](${inarilinks.url})`); }
+                    }
+                    else if (rhview == false && realedit == true) {
+                        addHCode(`<img src="${inarilinks.url}" border="0" alt="" style="max-width:400px"></img>`);
+                    }
                 }
                 else if (data.status == false) {
                     alert(data.message);
@@ -1093,8 +1787,17 @@ function upimgfunc(formData, textArea) {
             $.ajax({ url: imgapi + 'upload', type: 'POST', dataType: 'json', data: formData, contentType: false, processData: false, })
                 .done(data => {
                     if (data.status == true) {
-                        let inaridata = data.data, inarilinks = inaridata.links; addCode(textArea, inarilinks.bbcode);
-                        addHCode(`<img src="${inarilinks.url}" border="0" alt="" style="max-width:400px"></img>`);
+                        let inaridata = data.data, inarilinks = inaridata.links;
+                        if (rhview == false && realedit == true) {
+                            document.execCommand('insertImage', false, inarilinks.url);
+                        }
+                        else if (rhview == false && realedit == false) {
+                            if (customize.markdown == false) { addCode(textArea, inarilinks.bbcode); }
+                            else if (customize.markdown == true) { addCode(textArea, `![](${inarilinks.url})`); }
+                        }
+                        else if (rhview == false && realedit == true) {
+                            addHCode(`<img src="${inarilinks.url}" border="0" alt="" style="max-width:400px"></img>`);
+                        }
                         if (!localStorage.Alertless) {
                             alert(guestupimgText); localStorage.setItem('Alertless', true);
                         }
@@ -1109,8 +1812,17 @@ function upimgfunc(formData, textArea) {
             })
                 .done(data => {
                     if (data.status == true) {
-                        let inaridata = data.data, inarilinks = inaridata.links; addCode(textArea, inarilinks.bbcode);
-                        addHCode(`<img src="${inarilinks.url}" border="0" alt="" style="max-width:400px"></img>`);
+                        let inaridata = data.data, inarilinks = inaridata.links;
+                        if (rhview == false && realedit == true) {
+                            document.execCommand('insertImage', false, inarilinks.url);
+                        }
+                        else if (rhview == false && realedit == false) {
+                            if (customize.markdown == false) { addCode(textArea, inarilinks.bbcode); }
+                            else if (customize.markdown == true) { addCode(textArea, `![](${inarilinks.url})`); }
+                        }
+                        else if (rhview == false && realedit == true) {
+                            addHCode(`<img src="${inarilinks.url}" border="0" alt="" style="max-width:400px"></img>`);
+                        }
                     }
                     else if (data.status == false) { alert(data.message); } else { alert('发生未知错误，' + data); }
                 })
@@ -1174,6 +1886,7 @@ const appendCss = function () {
   a.stickerpp-sub-menu-active { color: black }
   .stickerpp-smile-panel { display: none; height: 136px; padding: 5px 3px; overflow-y: auto; border-top: 1px solid #ddd; }
   .stickerpp-smile-panel[data-key="Shortcut"] { height: auto; }
+  .stickerpp-smile-panel[data-key="Markdown"] { height: auto; }
   .stickerpp-smile { display: inline-block; max-width: 60px; max-height: 60px; cursor: pointer; }
   .stickerpp-smile-text { display: inline-block; padding: 3px 5px; }
   .stickerpp-smile-text:hover { color: #fff !important; background-color: #2b2b2b; text-decoration: none; }
@@ -1207,6 +1920,9 @@ const appendCss = function () {
   .stickerpp-shop_footer a{color: #707072;font-size: 10px;}
   .pd_custom_script_header { margin: 7px 0; padding: 5px; background-color: #e8e8e8; border-radius: 5px; }
   .pd_custom_script_content { display: none; width: 750px; height: 350px; white-space: pre; }
+  .Heditm { border-style: none;display: inline-block; text-align: center;width: 26px;height: 20px;}
+  .Heditms { border-style: none;display: inline-block; text-align: center;width: 26px;height: 20px;}
+  .StickerPPHtmlEditer img {max-width:500px}
   </style>`);
     if (isKfMobile == false && isMobile == false) {
         $('head').append(`<style>
@@ -1253,6 +1969,6 @@ if (loadcustom == false) {
 };
 let rhview = false, $realtimeView;
 if ($("iframe[id='e_iframe'],iframe[name='iframe']").length > 0) {
-    $realtimeView = $("iframe[id*='iframe'],iframe[name='iframe']"), rhview = true;
+    $realtimeView = $("iframe[id*='iframe'],iframe[name='iframe']")[0].contentWindow.document, rhview = true;
 }
 init();
