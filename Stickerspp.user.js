@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        表情贴纸增强插件
 // @namespace   https://github.com/HazukiKaguya/Stickers_PlusPlus
-// @version     2.0.0
+// @version     2.0.1
 // @author      HazukiKaguya
 // @description 回复表情，插图扩展插件，在发帖时快速输入自定义表情和论坛BBCODE
 // @icon        https://sticker.inari.site/favicon.ico
@@ -128,7 +128,7 @@ const
     guestupimgText = "游客上传成功！建议绑定up.inari.site图床账号到云同步账号！",
     kanbanerrText = "当前存在多个文本区，无法确认上传区域，看板娘点击上传暂不可用！",
     resText = "已重置，请刷新！",
-    updatelog = 'V2.0.0 : 为不支持所见即所得模式的论坛添加实时编辑模式，修复若干bug。'
+    updatelog = 'V2.0.1 : 为不支持所见即所得模式的论坛添加实时编辑模式，修复若干bug。'
     ;
 
 
@@ -885,9 +885,9 @@ const createContainer = function (textArea, qufen) {
         textArea.innerText = HeContent;
         textArea.value = HeContent;
     }).on('keydown', '#Htmleditarea' + qufen, function (e) {
-        e.preventDefault();
         if (e.keyCode === 13) {
             document.execCommand('insertHTML', false, '<br>&zwnj;');
+            //e.preventDefault();
         }
     }).on('paste', '#Htmleditarea' + qufen, function (e) {
         let isimg=event.clipboardData.files;
