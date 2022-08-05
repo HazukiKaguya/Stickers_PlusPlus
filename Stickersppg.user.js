@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        表情贴纸增强插件
 // @namespace   https://github.com/HazukiKaguya/Stickers_PlusPlus
-// @version     2.0.4
+// @version     2.0.5
 // @author      HazukiKaguya
 // @description 回复表情，插图扩展插件，在发帖时快速输入自定义表情和论坛BBCODE
 // @icon        https://sticker.inari.site/favicon.ico
@@ -33,7 +33,7 @@
 // jQuery隔离
 this.$ = this.jQuery = jQuery.noConflict(true);
 // 默认配置
-const updatelog = '版本V2.0.4, 更新日志: \n 为不支持所见即所得模式的论坛添加实时编辑模式，优化代码，修复Bugs。',
+const updatelog = '版本V2.0.5, 更新日志: \n 为不支持所见即所得模式的论坛添加实时编辑模式，优化代码，修复Bugs。',
     defaultSConf = {
         "version": "2.0.0",
         "kanbansize": "64",
@@ -794,7 +794,7 @@ const createContainer = function (textArea, qufen) {
         textArea.value = HeContent;
     }).on('keydown', '#Htmleditarea' + qufen, function (e) {
         if (e.keyCode === 13) { document.execCommand('insertHTML', false, '<br>&nbsp;'); }
-    }).on('paste', '#Htmleditarea' + qufen, function (event) {
+    }).on('paste', '#Htmleditarea' + qufen, function (e) {
         let isimg = event.clipboardData.files;
         if (isimg.length > 0) {
             event.preventDefault();
