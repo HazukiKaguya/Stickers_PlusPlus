@@ -364,8 +364,9 @@ const
     <sheader><logo>&nbsp;&nbsp;&nbsp;表情贴纸商店 | Sticker Shop</logo><span class="stickerpp-close-shop">×&nbsp;&nbsp;</span></sheader>
     <div class="stickerpp-shop_main" ><br>
     <div class="StickerPP-list-content">
+    <h3>开发文档: 标准化数据源格式</h3>
+    <p>{"id":int,"desc":"这里是描述，鼠标移到该分组时会显示","cover":"url","name":"_Name","title":"展示的名字","addr":"_NameList","numstart":[int,int,...],"numend":[int,int,...],"url1":["url前1","url前2",...],"url2":["url后1","url后1",...]};</p>
     </div>
-    <iframe src="" frameborder="0" name="NoRefreash" style="width:100%;"></iframe>
     </div>
     <div class="sticker-pages"><div class="StickerPP-list-pagination">
     </div>
@@ -375,9 +376,10 @@ const
     ©mistakey&nbsp;&nbsp;</div>
 </div></form>`,
     StickerPPlogedUp=`<form method="POST" action="https://api.inari.site/?s=App.Examples_Upload.Go" target="NoRefreash" enctype="multipart/form-data">
-    <p><b>检测到已登录，可以在此直接上传表情贴纸组压缩包并获取返回值</b></p>
+    <p><b>检测到已登录，可以在此直接上传表情贴纸组压缩包(最大50M)并获取返回值</b></p>
     <input class='StickerPP-pagination-nowpage-button' type="file" name="file">
-    <input class='StickerPP-pagination-nowpage-button' type="submit"></form>`,
+    <input class='StickerPP-pagination-nowpage-button' type="submit"></form>
+    <iframe src="" frameborder="0" name="NoRefreash" style="width:100%;height:42px"></iframe>`,
     StickerPPunlogUp=`<p><b>未登录或登录失效，登录后创作者可以直接在此上传表情贴纸组压缩包并获取返回值</b></p>`,
     StickerPPtextUp=`<h3>请按如下格式填写""内的内容，然后邮件内容至 <a herf="mailto:Hazukikaguya@office.inari.site">Hazukikaguya@office.inari.site</a></h3><p>
     名称: "这里填写展示在商店页面的描述名称"<br>
