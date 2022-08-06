@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        表情贴纸增强插件
 // @namespace   https://github.com/HazukiKaguya/Stickers_PlusPlus
-// @version     2.0.5
+// @version     2.0.6
 // @author      HazukiKaguya
 // @description 回复表情，插图扩展插件，在发帖时快速输入自定义表情和论坛BBCODE
 // @icon        https://sticker.inari.site/favicon.ico
@@ -20,7 +20,7 @@
 // @run-at      document-end
 // @license      MIT License
 // @require     https://cdn.jsdelivr.net/npm/jquery@2.2.4/dist/jquery.min.js
-// @updateURL   https://github.com/HazukiKaguya/Stickers_PlusPlus/raw/master/Stickerstickerppg.user.js
+// @updateURL   https://github.com/HazukiKaguya/Stickers_PlusPlus/raw/master/Stickerstickerpp.user.js
 // ==/UserScript==
 // 特别感谢：eddie32 https://greasyfork.org/users/5415-eddie32 & 喵拉布丁 https://github.com/miaolapd
 // 更新日志：https://github.com/HazukiKaguya/Stickers_PlusPlus#%E6%9B%B4%E6%96%B0%E8%AE%B0%E5%BD%95
@@ -33,7 +33,7 @@
 // jQuery隔离
 this.$ = this.jQuery = jQuery.noConflict(true);
 // 默认配置
-const updatelog = '版本V2.0.5, 更新日志: \n 为不支持所见即所得模式的论坛添加实时编辑模式，优化代码，修复Bugs。',
+const updatelog = '版本V2.0.6, 本次更新日志: \n 在线贴纸商店添加创作者投稿贴纸组功能。',
     defaultSConf = {
         "version": "2.0.0",
         "kanbansize": "64",
@@ -360,6 +360,32 @@ const
     <a target="_blank" href="https://stickers.inari.site/terms">Terms Of Service/服务条款</a> | <a target="_blank" href="https://stickers.inari.site/rules">Privacy Policy/隐私策略</a> | <a target="_blank" href="https://stickers.inari.site/qa">Q&A/常见问题</a> |
     ©mistakey&nbsp;&nbsp;</div>
 </div></form>`,
+    StickerPPUploadHtml = `<form><div class="stickerpp-shop_box" id="StickerPP-shop-dialog" style="display: block; top: 8px; left: 336px;">
+    <sheader><logo>&nbsp;&nbsp;&nbsp;表情贴纸商店 | Sticker Shop</logo><span class="stickerpp-close-shop">×&nbsp;&nbsp;</span></sheader>
+    <div class="stickerpp-shop_main" ><br>
+    <div class="StickerPP-list-content">
+    </div>
+    <iframe src="" frameborder="0" name="NoRefreash" style="width:100%;"></iframe>
+    </div>
+    <div class="sticker-pages"><div class="StickerPP-list-pagination">
+    </div>
+    </div>
+    <div class="stickerpp-shop_footer">
+    <a target="_blank" href="https://stickers.inari.site/terms">Terms Of Service/服务条款</a> | <a target="_blank" href="https://stickers.inari.site/rules">Privacy Policy/隐私策略</a> | <a target="_blank" href="https://stickers.inari.site/qa">Q&A/常见问题</a> |
+    ©mistakey&nbsp;&nbsp;</div>
+</div></form>`,
+    StickerPPlogedUp=`<form method="POST" action="https://api.inari.site/?s=App.Examples_Upload.Go" target="NoRefreash" enctype="multipart/form-data">
+    <p><b>检测到已登录，可以在此直接上传表情贴纸组压缩包并获取返回值</b></p>
+    <input class='StickerPP-pagination-nowpage-button' type="file" name="file">
+    <input class='StickerPP-pagination-nowpage-button' type="submit"></form>`,
+    StickerPPunlogUp=`<p><b>未登录或登录失效，登录后创作者可以直接在此上传表情贴纸组压缩包并获取返回值</b></p>`,
+    StickerPPtextUp=`<h3>请按如下格式填写""内的内容，然后邮件内容至 <a herf="mailto:Hazukikaguya@office.inari.site">Hazukikaguya@office.inari.site</a></h3><p>
+    名称: "这里填写展示在商店页面的描述名称"<br>
+    作者: "这里填写作者"<br>
+    描述: "这里是描述，鼠标移到该分组时会显示"<br>
+    标题: "这里填写启用后展示的名字（如邦邦/S1/AC娘 这种简短的）"<br>
+    封面: "这里填写展示在商店页面的封面图片的url链接，建议使用邮件附件"<br>
+    链接: "这里填写可下载帖纸组的url/压缩包。登录用户可在此页面上传压缩包并复制返回值，但还是建议创作者直接使用邮件附件"</p>`,
     StickerPPItemHtml = `<div class="sticker-item"><div class="sticker-item-img"><img style="width: 50px; height: 50px;"/></div><div class="sticker-item-name"></div></div>`,
     StickerPPPaginationItemHtml = `<div class="StickerPP-pagination-item-button"></div>`,
     StickerPPNowPageHtml = `<div class="StickerPP-pagination-nowpage-button"></div>`,
@@ -439,7 +465,7 @@ const createContainer = function (textArea, qufen) {
     <div class="stickerpp-bqz-panel" style="display:none">
     <input type="button" class="stickerpp-user-loc" value="启用的本地表情">&nbsp;
     <input type="button" class="stickerpp-user-oln" value="浏览表情组商店">&nbsp;
-    <input type="button" class="stickerpp-user-raw" value="商店数据源设置">&nbsp;
+    <input type="button" class="stickerpp-user-raw" value="向贴纸商店投稿">&nbsp;
     <div class="stickerpp-loc-panel" style="display:none"><table><tr>
     <td><li><input type="checkbox" class="locbt" id="ng${qufen}0" value="0">AC娘</li></td>
     <td><li><input type="checkbox" class="locbt" id="ng${qufen}1" value="1">S1麻将脸</li></td>
@@ -630,12 +656,7 @@ const createContainer = function (textArea, qufen) {
         e.preventDefault();
         StickerPPShowDialog();
     }).on('click', '.stickerpp-user-raw', function (e) {
-        e.preventDefault();
-        let theonlineraw = prompt("在线表情组商店数据仓库源设置，默认使用inari源", 'https://api.inari.site/?s=App.Sticker.');
-        let safeornot = confirm("是否显示未经审核的表情贴纸组？");
-        if (theonlineraw) customize.onlineraw = theonlineraw;
-        customize.notauthed = safeornot;
-        localStorage.setItem('StickerConf', JSON.stringify(customize));
+        e.preventDefault();StickerPPShowUpload();
     }).on('click', '.stickerpp-user-cfg', function (e) {
         e.preventDefault();
         // 载入个性化
@@ -865,6 +886,82 @@ const createContainer = function (textArea, qufen) {
  * 方法功能区
  * @param textArea 文本框
  */
+// 表情商店方法
+const StickerPPShowUpload = function () {
+    let $dialog = $("#StickerPP-shop-dialog")[0]; $("body").append(StickerPPUploadHtml); let $root = $("#StickerPP-shop-dialog .StickerPP-list-content");
+    if (localStorage.logindata != null) {
+        let tokenList = JSON.parse(localStorage.logindata), syncid = tokenList[0], synctoken = tokenList[1];
+        let upRequest = new XMLHttpRequest();
+        upRequest.open('POST', 'https://api.inari.site/?s=App.User_User.CheckSession&user_id=' + syncid + '&token=' + synctoken, true);
+        upRequest.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+        upRequest.send('name=teswe&ee=ef'); upRequest.onreadystatechange = function () {
+            if (upRequest.readyState == 4 && upRequest.status == 200) {
+                let upjson = upRequest.responseText, upload = JSON.parse(upjson);
+                if (upload.ret == 200) {
+                    let logornot = upload.data.is_login;
+                    if (logornot == true) { $root.append($(StickerPPlogedUp)); }
+                    else { $root.append($(StickerPPunlogUp)); }
+                }
+                else { $root.append($(StickerPPunlogUp)); }
+            }
+            else if (upRequest.readyState == 4 && upRequest.status != 200) { $root.append($(StickerPPunlogUp)); }
+        }
+    }
+    else { $root.append($(StickerPPunlogUp)); };
+    $root.append($(StickerPPtextUp));
+}
+const StickerPPShowDialog = function () { let $dialog = $("#StickerPP-shop-dialog")[0]; $("body").append(StickerPPDialogHtml); StickerPPLoadSticker(1); }
+const StickerPPLoadSticker = function (thePage) {
+    let success = function (data) { loadStickerList(data.data.items); loadStickerListPagination(data.data); };
+    let onlineRaw = customize.onlineraw, authornot;
+    customize.notauthed == false ? authornot = "GetList" : authornot = "GetListR";
+    let PageRequest = new XMLHttpRequest();
+    PageRequest.open('POST', onlineRaw + authornot + '&page=' + thePage + '&perpage=20', true);
+    PageRequest.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+    PageRequest.send('name=teswe&ee=ef');
+    PageRequest.onreadystatechange = function () {
+        if (PageRequest.readyState == 4 && PageRequest.status == 200) {
+            let pagejson = PageRequest.responseText, pageload = JSON.parse(pagejson);
+            if (pageload.ret == 200) { success(pageload); }
+            else { alert('发生异常！' + pageload.msg); }
+        }
+        else if (PageRequest.readyState == 4 && PageRequest.status != 200) { alert('发生错误！错误状态码：' + PageRequest.status) }
+    }
+}
+const loadStickerList = function (items) {
+    let $root = $("#StickerPP-shop-dialog .StickerPP-list-content"); $root.empty();
+    $.each(items, function (_, o) {
+        let content = JSON.parse(o.content);
+        let $node = $(StickerPPItemHtml).prop("title", content.desc).data("id", o.id).data("content", o.content)
+            .find("img").prop("src", content.cover).end().find(".sticker-item-name").text(o.title).end(); $root.append($node);
+    });
+}
+const loadStickerListPagination = function (data) {
+    let total = Math.ceil(data.total / 20), page = data.page, $root = $("#StickerPP-shop-dialog .StickerPP-list-pagination");
+    if (page != 1) {
+        $root.append($(StickerPPPaginationItemHtml).data("id", 1).text("回首页"));
+        $root.append($(prevNextPageHtml).data("id", page - 1).text("上一页"));
+    }
+    if (total < 12 || page < 7) {
+        for (let i = 1; i < page; ++i) { let id = i, $node = $(StickerPPPaginationItemHtml).data("id", id).text(id); $root.append($node); }
+        let $node1 = $(StickerPPNowPageHtml).data("id", page).text(page); $root.append($node1);
+        for (let i = page; i < total; ++i) { let id = i + 1, $node = $(StickerPPPaginationItemHtml).data("id", id).text(id); $root.append($node); }
+    }
+    else if (total > 11 && page + 5 < total) {
+        for (let i = page - 5; i < page; ++i) { let id = i, $node = $(StickerPPPaginationItemHtml).data("id", id).text(id); $root.append($node); }
+        let $node1 = $(StickerPPNowPageHtml).data("id", page).text(page); $root.append($node1);
+        for (let i = page; i < page + 5; ++i) { let id = i + 1, $node = $(StickerPPPaginationItemHtml).data("id", id).text(id); $root.append($node); }
+    }
+    else if (total > 11 && page + 6 > total) {
+        for (let i = total - 10; i < page; ++i) { let id = i, $node = $(StickerPPPaginationItemHtml).data("id", id).text(id); $root.append($node); }
+        let $node1 = $(StickerPPNowPageHtml).data("id", page).text(page); $root.append($node1);
+        for (let i = page; i < total; ++i) { let id = i + 1, $node = $(StickerPPPaginationItemHtml).data("id", id).text(id); $root.append($node); }
+    }
+    if (page != total) {
+        $root.append($(prevNextPageHtml).data("id", page + 1).text("下一页"));
+        $root.append($(StickerPPPaginationItemHtml).data("id", total).text("去末页"));
+    }
+}
 // 在KF论坛：直接显示表情贴纸增强插件所属域名的图片而不是显示【请手动点击打开本图片】，修复旧的失效的表情贴纸的显示。
 if (isKF == true) {
     let x = document.getElementsByTagName("img");
@@ -1304,59 +1401,6 @@ function userdfunc() {
         }
     }
 }
-// 表情商店方法
-const StickerPPShowDialog = function () { let $dialog = $("#StickerPP-shop-dialog")[0]; $("body").append(StickerPPDialogHtml); StickerPPLoadSticker(1); }
-const StickerPPLoadSticker = function (thePage) {
-    let success = function (data) { loadStickerList(data.data.items); loadStickerListPagination(data.data); };
-    let onlineRaw = customize.onlineraw, authornot;
-    customize.notauthed == false ? authornot = "GetList" : authornot = "GetListR";
-    let PageRequest = new XMLHttpRequest();
-    PageRequest.open('POST', onlineRaw + authornot + '&page=' + thePage + '&perpage=20', true);
-    PageRequest.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-    PageRequest.send('name=teswe&ee=ef');
-    PageRequest.onreadystatechange = function () {
-        if (PageRequest.readyState == 4 && PageRequest.status == 200) {
-            let pagejson = PageRequest.responseText, pageload = JSON.parse(pagejson);
-            if (pageload.ret == 200) { success(pageload); }
-            else { alert('发生异常！' + pageload.msg); }
-        }
-        else if (PageRequest.readyState == 4 && PageRequest.status != 200) { alert('发生错误！错误状态码：' + PageRequest.status) }
-    }
-}
-const loadStickerList = function (items) {
-    let $root = $("#StickerPP-shop-dialog .StickerPP-list-content"); $root.empty();
-    $.each(items, function (_, o) {
-        let content = JSON.parse(o.content);
-        let $node = $(StickerPPItemHtml).prop("title", content.desc).data("id", o.id).data("content", o.content)
-            .find("img").prop("src", content.cover).end().find(".sticker-item-name").text(o.title).end(); $root.append($node);
-    });
-}
-const loadStickerListPagination = function (data) {
-    let total = Math.ceil(data.total / 20), page = data.page, $root = $("#StickerPP-shop-dialog .StickerPP-list-pagination");
-    if (page != 1) {
-        $root.append($(StickerPPPaginationItemHtml).data("id", 1).text("回首页"));
-        $root.append($(prevNextPageHtml).data("id", page - 1).text("上一页"));
-    }
-    if (total < 12 || page < 7) {
-        for (let i = 1; i < page; ++i) { let id = i, $node = $(StickerPPPaginationItemHtml).data("id", id).text(id); $root.append($node); }
-        let $node1 = $(StickerPPNowPageHtml).data("id", page).text(page); $root.append($node1);
-        for (let i = page; i < total; ++i) { let id = i + 1, $node = $(StickerPPPaginationItemHtml).data("id", id).text(id); $root.append($node); }
-    }
-    else if (total > 11 && page + 5 < total) {
-        for (let i = page - 5; i < page; ++i) { let id = i, $node = $(StickerPPPaginationItemHtml).data("id", id).text(id); $root.append($node); }
-        let $node1 = $(StickerPPNowPageHtml).data("id", page).text(page); $root.append($node1);
-        for (let i = page; i < page + 5; ++i) { let id = i + 1, $node = $(StickerPPPaginationItemHtml).data("id", id).text(id); $root.append($node); }
-    }
-    else if (total > 11 && page + 6 > total) {
-        for (let i = total - 10; i < page; ++i) { let id = i, $node = $(StickerPPPaginationItemHtml).data("id", id).text(id); $root.append($node); }
-        let $node1 = $(StickerPPNowPageHtml).data("id", page).text(page); $root.append($node1);
-        for (let i = page; i < total; ++i) { let id = i + 1, $node = $(StickerPPPaginationItemHtml).data("id", id).text(id); $root.append($node); }
-    }
-    if (page != total) {
-        $root.append($(prevNextPageHtml).data("id", page + 1).text("下一页"));
-        $root.append($(StickerPPPaginationItemHtml).data("id", total).text("去末页"));
-    }
-}
 // 注册&登录方法
 function loginfunc() {
     let username = prompt("用户名", 'username');
@@ -1649,7 +1693,7 @@ const appendCss = function () {
   .StickerPP-pagination-item-button {border-style: none;display: inline-block; text-align: center; margin: 5px;}
   .StickerPP-pagination-nowpage-button {    border: 1px solid #e5e5e5;color: #00b84f;min-width: 30px;display: inline-block; text-align: center; margin: 5px;}
   .StickerPP-pagination-prev-next {border-style: none;display: inline-block; text-align: center; margin: 5px;}
-  .sticker-pages {background-color: #fcfcfc;padding: 8px 0 6px 10px;position: relative;color: #707072;font-size: 10px;margin: 0;text-align: center;display: inline-block;width: 100%; }
+  .sticker-pages {background-color: #fcfcfc;padding: 8px 0 6px 10px;position: relative;color: #707072;font-size: 10px;margin: 0;text-align: center;width: 100%; }
   .stickerpp-shop_footer {background-color: #f7f7fc;border-top: 1px solid #e6e6e6;padding: 8px 0 6px 10px;position: relative;color: #707072;font-size: 10px;margin: 0;}
   .stickerpp-shop_footer a{color: #707072;font-size: 10px;}
   .pd_custom_script_header { margin: 7px 0; padding: 5px; background-color: #e8e8e8; border-radius: 5px; }
