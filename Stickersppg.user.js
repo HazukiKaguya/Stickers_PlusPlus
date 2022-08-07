@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        表情贴纸增强插件
 // @namespace   https://github.com/HazukiKaguya/Stickers_PlusPlus
-// @version     2.0.6
+// @version     2.0.7
 // @author      HazukiKaguya
 // @description 回复表情，插图扩展插件，在发帖时快速输入自定义表情和论坛BBCODE
 // @icon        https://sticker.inari.site/favicon.ico
@@ -33,7 +33,7 @@
 // jQuery隔离
 this.$ = this.jQuery = jQuery.noConflict(true);
 // 默认配置
-const updatelog = '版本V2.0.6, 本次更新日志: \n 在线贴纸商店添加创作者投稿贴纸组功能。',
+const updatelog = '版本V2.0.7, 本次更新日志: \n 在线贴纸商店添加创作者投稿贴纸组功能，fix a bug.',
     defaultSConf = {
         "version": "2.0.0",
         "kanbansize": "64",
@@ -68,7 +68,7 @@ let LocalRaws = [
     { "id": 8, "desc": "少女☆歌剧。去吧，两人一起，摘下那颗星。", "cover": "https://sticker.inari.site/revstar/revstar (1).png", "name": "_Revue", "title": '少歌', "addr": "_RevueSmileList", "numstart": [1], "numend": [41], "url1": ["https://sticker.inari.site/revstar/revstar ("], "url2": [").png"] },
     { "id": 9, "desc": "公主连结Re:Dive。いま、新たな冒険の幕が上がる——", "cover": "https://sticker.inari.site/redive/sticker (1).png", "name": "_Redive", "title": 'PCR', "addr": "_RediveSmileList", "numstart": [1], "numend": [49], "url1": ["https://sticker.inari.site/redive/sticker ("], "url2": [").png"] },
     { "id": 10, "desc": "BanG Dream！噜~ キラキラ☆ドキドキ~ ふえぇ~", "cover": "https://sticker.inari.site/bangdream/bangdream (1).png", "name": "_Bandori", "title": '邦邦', "addr": "_BandoriSmileList", "numstart": [1], "numend": [41], "url1": ["https://sticker.inari.site/bangdream/bangdream ("], "url2": [").png"] },
-], customize = defaultSConf;
+], customize = defaultSConf,loadcustom = true,userimgst,loconsticker;
 // 客制化配置
 if (!localStorage.StickerConf) { loadcustom = false; localStorage.setItem('StickerConf', JSON.stringify(defaultSConf)); }
 else { customize = JSON.parse(localStorage.StickerConf); };
@@ -100,7 +100,7 @@ const UserSmileList = JSON.parse(userimgst), imgapi = customize.imgapi, cloudapi
     FinalList = [], FinalRaw = [], KfSmileList = [], KfSmileCodeList = [], RandomSmileList = [], UsersSmileList = [], MenuList = {};
 let isKF = false, isMQ = false, isMobile = false, loadcustom = true, realedits = true, rhview = false, realedit = customize.realedit,
     $realtimeView, kfImgPath, olAuth = sessionStorage.OnlineSmile, locAuth = sessionStorage.localSmile,
-    OnlineRaws = [], uupath = [], localSmile = [], KFstyle = "", realeditcheck = '';
+    OnlineRaws = [], uupath = [], localSmile = [], KFstyle = "", realeditcheck = '',OnlineSmile,code_htm,code_num,OnlineRawslists,olhaved;
 if (realedit && isMQ == false) { realeditcheck = 'checked' }
 if (localStorage.onlineraws) { OnlineRaws = JSON.parse(localStorage.onlineraws); }
 // 网站是否为KF
