@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        表情贴纸增强插件
 // @namespace   https://github.com/HazukiKaguya/Stickers_PlusPlus
-// @version     2.0.7
+// @version     2.0.8
 // @author      HazukiKaguya
 // @description 回复表情，插图扩展插件，在发帖时快速输入自定义表情和论坛BBCODE
 // @icon        https://sticker.inari.site/favicon.ico
@@ -33,7 +33,7 @@
 // jQuery隔离
 this.$ = this.jQuery = jQuery.noConflict(true);
 // 默认配置
-const updatelog = '版本V2.0.7, 本次更新日志: \n 在线贴纸商店添加创作者投稿贴纸组功能，fix a bug.',
+const updatelog = '版本V2.0.8, 本次更新日志: \n 在线贴纸商店添加创作者投稿贴纸组功能，fix bugs.',
     defaultSConf = {
         "version": "2.0.0",
         "kanbansize": "64",
@@ -99,8 +99,8 @@ if (customize.version != defaultSConf.version) {
 const UserSmileList = JSON.parse(userimgst), imgapi = customize.imgapi, cloudapi = customize.cloudapi,
     FinalList = [], FinalRaw = [], KfSmileList = [], KfSmileCodeList = [], RandomSmileList = [], UsersSmileList = [], MenuList = {};
 let isKF = false, isMQ = false, isMobile = false, realedits = true, rhview = false, realedit = customize.realedit,
-    $realtimeView, kfImgPath, olAuth = sessionStorage.OnlineSmile, locAuth = sessionStorage.localSmile,
-    OnlineRaws = [], uupath = [], localSmile = [], KFstyle = "", realeditcheck = '',OnlineSmile,code_htm,code_num,OnlineRawslists,olhaved;
+    $realtimeView, kfImgPath, OnlineSmile, code_htm, code_num, OnlineRawslists, olhaved, TempLists, TempList, HeContent,
+    olAuth = sessionStorage.OnlineSmile, locAuth = sessionStorage.localSmile,OnlineRaws = [], uupath = [], localSmile = [], KFstyle = "", realeditcheck = '';
 if (realedit && isMQ == false) { realeditcheck = 'checked' }
 if (localStorage.onlineraws) { OnlineRaws = JSON.parse(localStorage.onlineraws); }
 // 网站是否为KF
@@ -513,8 +513,8 @@ const createContainer = function (textArea, qufen) {
         <button class="Heditm" data-edit="fontSize:7"><b>L</b></button>
       </span>
         <button class="Heditm" data-edit="removeFormat" title="清除选中文本的格式"><b>⨯</b></button>
-        
-            
+
+
     </div>
     <div class="StickerPPHtmlEditer" id="Htmleditarea${qufen}" contenteditable="true" spellcheck="false" style="height: 300px;overflow:auto;background:white;border:1px dashed #000;outline:none;margin: 0px; height: 300px;margin: 0px; " ></div>
 
@@ -774,7 +774,7 @@ const createContainer = function (textArea, qufen) {
         if (rhview == false) {
             let $tempRHArea = $container.find(`#Htmleditarea${qufen}`);
             if (e.target.checked) {
-                TeContent = bb2html(textArea.value);
+                let TeContent = bb2html(textArea.value);
                 $tempRHArea[0].innerHTML = TeContent;
                 if ($('#spp-reply-textarea').length > 0) {
                     let spptextarea = $('#spp-reply-textarea'), sppcontent = bb2html(spptextarea[0].value);
@@ -792,7 +792,7 @@ const createContainer = function (textArea, qufen) {
                 }
                 else {
                     $('textarea').show(); $('#editor-button').show();
-                    let HeContent = html2bb($tempRHArea[0].innerHTML);
+                    HeContent = html2bb($tempRHArea[0].innerHTML);
                     textArea.innerHTML = HeContent;
                     textArea.innerText = HeContent;
                     textArea.value = HeContent;
@@ -811,7 +811,7 @@ const createContainer = function (textArea, qufen) {
             alert('检测到当前页面自带可视化编辑器！请使用自带的可视化编辑器！');
         }
     }).on('blur', '#Htmleditarea' + qufen, function (e) {
-        let HeContent = html2bb(e.target.innerHTML);
+        HeContent = html2bb(e.target.innerHTML);
         textArea.innerHTML = HeContent;
         textArea.innerText = HeContent;
         textArea.value = HeContent;
@@ -1115,7 +1115,7 @@ $(document).on('click', "a[title='回复此楼']", function (e) {
 function html2bb(str) {
     str = str.replace(/<img[^>]*smile=\"(\d+)\"[^>]*>/ig, '[s:$1]');
     str = str.replace(/<img[^>]*type=\"(attachment|upload)\_(\d+)\"[^>]*>/ig, '[$1=$2]');
-    code_htm = new Array(); code_num = 0;
+    let code_htm = new Array(),code_num = 0;
     str = str.replace(/(\r\n|\n|\r)/ig, '');
     str = str.replace(/<p[^>\/]*\/>/ig, '\n');
     str = str.replace(/\son[\w]{3,16}\s?=\s*([\'\"]).+?\1/ig, '');
@@ -1129,8 +1129,8 @@ function html2bb(str) {
     str = str.replace(/<(\/)?strong>/ig, '[$1b]');
     str = str.replace(/<(\/)?em>/ig, '[$1i]');
     str = str.replace(/<(\/)?blockquote([^>]*)>/ig, '[$1blockquote]');
-    str = str.replace(/<img[^>]*src=[\'\"\s]*([^\'\"]+)[^>]*>/ig, '[img]' + '$1' + '[/img]');
-    str = str.replace(/<a[^>]*href=[\'\"\s]*([^\'\"]*)[^>]*>(.+?)<\/a>/ig, '[url=$1]' + '$2' + '[/url]');
+    str = str.replace(/<img[^>]*src=[\'\"\s]*([^\'\"]+)[^>]*>/ig, '[img]$1[/img]');
+    str = str.replace(/<a[^>]*href=[\'\"\s]*([^\'\"]*)[^>]*>(.+?)<\/a>/ig, '[url=$1]$2[/url]');
     str = str.replace(/<h([1-6]+)([^>]*)>(.*?)<\/h\1>/ig, function ($1, $2, $3, $4) { return h($3, $4, $2); });
     str = searchtag('table', str, 'table', 1);
     str = searchtag('font', str, 'Font', 1);
@@ -1139,7 +1139,7 @@ function html2bb(str) {
     str = searchtag('span', str, 'dsc', 1);
     str = searchtag('ol', str, 'list', 1);
     str = searchtag('ul', str, 'list', 1);
-    for (i in code_htm) { str = str.replace("[\twind_phpcode_" + i + "\t]", code_htm[i]); }
+    for (let i in code_htm) { str = str.replace("[\twind_phpcode_" + i + "\t]", code_htm[i]); }
     str = str.replace(/&nbsp;/ig, ' ');
     str = str.replace(/<br[^>]*>/ig, '\n');
     str = str.replace(/<[^>]*?>/ig, '');
@@ -1150,7 +1150,7 @@ function html2bb(str) {
     return str;
 }
 function bb2html(str) {
-    code_htm = new Array(); code_num = 0;
+    let code_htm = new Array(),code_num = 0;
     str = str.replace(/&(?!(#[0-9]+|[a-z]+);)/ig, '&amp;');
     str = str.replace(/</ig, '&lt;');
     str = str.replace(/>/ig, '&gt;');
@@ -1173,12 +1173,12 @@ function bb2html(str) {
     str = str.replace(/\[(attachment|upload)=(\d+)\]/ig, function ($1, $2, $3) { return attpath($3, $2); });
     str = str.replace(/\[s:(\d+)\]/ig, function ($1, $2) { return smilepath($2); });
     str = str.replace(/\[img\]([^\[]*)\[\/img\]/ig, '<img src="$1" border="0" />');
-    str = str.replace(/\[url=([^\]]+)\]([^\[]+)\[\/url\]/ig, '<a href="$1">' + '$2' + '</a>');
+    str = str.replace(/\[url=([^\]]+)\]([^\[]+)\[\/url\]/ig, '<a href="$1">$2</a>');
     str = searchtag('table', str, 'tableshow', 2);
     str = str.replace(/\[\/align\]/ig, '</p>');
     str = str.replace(/\[(\/)?h([1-6])\]/ig, '<$1h$2>');
     str = str.replace(/\[align=(left|center|right|justify)\]/ig, '<p align="$1">');
-    for (i in code_htm) { str = str.replace("[\twind_phpcode_" + i + "\t]", code_htm[i]); }
+    for (let i in code_htm) { str = str.replace("[\twind_phpcode_" + i + "\t]", code_htm[i]); }
     return str;
 }
 // 杂项
@@ -1194,7 +1194,7 @@ function attpath(attid, type) {
     else {
         if (!path.match(/\.(jpg|gif|png|bmp|jpeg)$/ig) && upath == false) { path = imgpath + '/' + stylepath + '/file/zip.gif'; }
         let img = imgmaxwh(path, 320);
-        if (img.width == 0) { return '<img src="' + path + '" type="' + type + '_' + attid + '" width="' + "240" + '" />'; }
+        if (img.width == 0) { return '<img src="' + path + '" type="' + type + '_' + attid + '" width="240" />'; }
         else { return '<img src="' + path + '" type="' + type + '_' + attid + '" width="' + img.width + '" />'; }
     }
 }
@@ -1206,10 +1206,10 @@ function imgmaxwh(url, maxwh) {
 function smilepath(NewCode) {
     if (isKF) {
         let NewCodes = NewCode - 9;
-        if (NewCode < 19) { return '<img src="/' + kfImgPath + '/post/smile/em/em0' + NewCodes + '.gif' + '" smile="' + NewCode + '" />'; }
-        else { return '<img src="/' + kfImgPath + '/post/smile/em/em' + NewCodes + '.gif' + '" smile="' + NewCode + '" />'; }
+        if (NewCode < 19) { return '<img src="/' + kfImgPath + '/post/smile/em/em0' + NewCodes + '.gif" smile="' + NewCode + '" />'; }
+        else { return '<img src="/' + kfImgPath + '/post/smile/em/em' + NewCodes + '.gif" smile="' + NewCode + '" />'; }
     }
-    else { return '<img src="' + imgpath + '/post/smile/smallface/face' + NewCode + '.gif' + '" smile="' + NewCode + '" />'; }
+    else { return '<img src="' + imgpath + '/post/smile/smallface/face' + NewCode + '.gif" smile="' + NewCode + '" />'; }
 }
 function h(style, code, size) { size = 7 - size; code = '[size=' + size + '][b]' + code + '[/b][/size]'; return p(style, code); }
 function p(style, code) {
@@ -1296,7 +1296,7 @@ function table(style, str) {
     str = searchtag('th', str, 'td', 1);
     let styles = ['width=', 'width:'], s = '';;
     style = style.toLowerCase();
-    for (i in styles) {
+    for (let i in styles) {
         if (style.indexOf(styles[i]) == -1) { continue; }
         s = '=' + findvalue(style, styles[i]); break;
     }
@@ -1325,7 +1325,7 @@ function Font(style, str) {
     let styles = new Array();
     styles = { 'size': 'size=', 'color': 'color=', 'font': 'face=', 'backcolor': 'background-color:' };
     style = style.toLowerCase();
-    for (st in styles) {
+    for (let st in styles) {
         let begin = style.indexOf(styles[st]);
         if (begin == -1) { continue; }
         let value = findvalue(style, styles[st]);
@@ -1493,7 +1493,7 @@ function imgbindfunc() {
                 let tokenTList = JSON.parse(localStorage.logindata), synctid = tokenTList[0], syncttoken = tokenTList[1];
                 let tokendata = data.data, token = tokendata.token, tokenarray = [synctid, syncttoken, token];
                 localStorage.setItem('logindata', JSON.stringify(tokenarray)); let tokenRequest = new XMLHttpRequest();
-                tokenRequest.open('POST', 'https://api.inari.site/?s=App.User_User.tupdate&user_id=' + syncid + '&token=' + synctoken + '&tupdate=' + token, true);
+                tokenRequest.open('POST', 'https://api.inari.site/?s=App.User_User.tupdate&user_id=' + synctid + '&token=' + syncttoken + '&tupdate=' + token, true);
                 tokenRequest.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
                 tokenRequest.send('name=teswe&ee=ef'); tokenRequest.onreadystatechange = function () {
                     if (tokenRequest.readyState == 4 && tokenRequest.status == 200) {
