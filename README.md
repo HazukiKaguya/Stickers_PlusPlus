@@ -3,6 +3,9 @@
 目前在**S1论坛实测除移动版快捷回复模式**均兼容；  在**某四个论坛实测所有模式均完全正常**；  
 [更新记录](#%E6%9B%B4%E6%96%B0%E8%AE%B0%E5%BD%95)  
 
+如何隐藏看板娘？把看板娘url设置为如下即可  
+data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==  
+
 ## 安装脚本  
 [Github](https://github.com/HazukiKaguya/Stickers_PlusPlus/raw/master/Stickerspp.user.js)  
 [GreasyFork](https://greasyfork.org/zh-CN/scripts/448465)  
