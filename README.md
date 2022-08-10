@@ -85,6 +85,7 @@ data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==
 pc版喵拉同理，除了gui布局外交互逻辑完全一样
 
 ## 更新记录
+2.1.0   实装看板娘触控拖动支持&云同步账号快捷登录；优化看板娘拖动代码&其他代码;   
 2.0.7   fix a bug;   
 2.0.6   在线贴纸商店添加创作者投稿贴纸组功能;   
 2.0.5   fix a bug;   
