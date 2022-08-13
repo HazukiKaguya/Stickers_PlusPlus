@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        表情贴纸增强插件
 // @namespace   https://github.com/HazukiKaguya/Stickers_PlusPlus
-// @version     2.1.0
+// @version     2.1.1
 // @author      HazukiKaguya
 // @description 回复表情，插图扩展插件，在发帖时快速输入自定义表情和论坛BBCODE
 // @icon        https://sticker.inari.site/favicon.ico
@@ -33,7 +33,7 @@
 // jQuery隔离
 this.$ = this.jQuery = jQuery.noConflict(true);
 // 默认配置&本地贴纸源
-const updatelog = '版本V2.1.0, 本次更新日志: \n 实装看板娘触控拖动支持&云同步账号快捷登录；优化看板娘拖动代码&其他代码。',
+const updatelog = '版本V2.1.1, 本次更新日志: \n 实装看板娘触控拖动支持&云同步账号快捷登录；优化看板娘拖动代码&其他代码,fix a bug.',
     defaultSConf = {
         "version": "2.1.0",
         "kanbansize": "64",
@@ -997,9 +997,9 @@ function imgmaxwh(url, maxwh) {
 }
 function smilepath(NewCode) {
     if (isKF) {
-        temp = NewCode - 9;
-        if (NewCode < 19) { return '<img src="/' + kfImgPath + '/post/smile/em/em0' + temp + '.gif" smile="' + NewCode + '" />'; }
-        else { return '<img src="/' + kfImgPath + '/post/smile/em/em' + temp + '.gif" smile="' + NewCode + '" />'; }
+        let stemp = NewCode - 9;
+        if (NewCode < 19) { return '<img src="/' + kfImgPath + '/post/smile/em/em0' + stemp + '.gif" smile="' + NewCode + '" />'; }
+        else { return '<img src="/' + kfImgPath + '/post/smile/em/em' + stemp + '.gif" smile="' + NewCode + '" />'; }
     }
     else { return '<img src="' + imgpath + '/post/smile/smallface/face' + NewCode + '.gif" smile="' + NewCode + '" />'; }
 }
