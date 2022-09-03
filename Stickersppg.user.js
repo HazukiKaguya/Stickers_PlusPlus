@@ -2,7 +2,7 @@
 // @name        表情贴纸增强插件
 // @namespace   https://github.com/HazukiKaguya/Stickers_PlusPlus
 // @homepage    https://github.com/HazukiKaguya/Stickers_PlusPlus
-// @version     2.1.2
+// @version     2.1.3
 // @author      HazukiKaguya
 // @description 回复表情，插图扩展插件，在发帖时快速输入自定义表情和论坛BBCODE
 // @icon        https://sticker.inari.site/favicon.ico
@@ -20,7 +20,7 @@
 // @run-at      document-end
 // @license     MIT License
 // @require     https://cdn.jsdelivr.net/npm/jquery@2.2.4/dist/jquery.min.js
-// @updateURL   https://github.com/HazukiKaguya/Stickers_PlusPlus/raw/master/Stickerstickerppg.user.js
+// @updateURL   https://github.com/HazukiKaguya/Stickers_PlusPlus/raw/master/Stickerstickerpp.user.js
 // ==/UserScript==
 // 特别感谢：eddie32 https://greasyfork.org/users/5415-eddie32 & 喵拉布丁 https://github.com/miaolapd
 // 更新日志：https://github.com/HazukiKaguya/Stickers_PlusPlus#%E6%9B%B4%E6%96%B0%E8%AE%B0%E5%BD%95
@@ -33,7 +33,7 @@
 // jQuery隔离
 this.$ = this.jQuery = jQuery.noConflict(true);
 // 默认配置&本地贴纸源
-const updatelog = '版本V2.1.1, 本次更新日志: \n 实装看板娘触控拖动支持&云同步账号快捷登录；优化看板娘拖动代码&其他代码,fix a bug.',
+const updatelog = '版本V2.1.3, 本次更新日志: \n 规定看板娘拖动右侧缩小的最小大小，修复Bugs.',
     defaultSConf = {
         "version": "2.1.0",
         "kanbansize": "64",
@@ -46,7 +46,7 @@ const updatelog = '版本V2.1.1, 本次更新日志: \n 实装看板娘触控拖
         "markdown": false,
         "lcimglists": [],
         "olimglists": []
-    }, check = ["kf", "365gal", "miaola", "bakabbs", "9shenmi"], mbcheck = ["&mobile=2", "/simple/"], mqcheck = ["&multiquote"],
+    }, check = ["kf", "365gal", "miaola", "bakabbs", "9shenmi"], mbcheck = ["&mobile=2", "/simple/"], mqcheck = ["multiquote"],
     FinalList = [], FinalRaw = [], KfSmileList = [], KfSmileCodeList = [], RandomSmileList = [], UsersSmileList = [], MenuList = {},
     uploadfile = `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFoAAAAVCAYAAADGpvm7AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAMGSURBVFhH7ZkxduIwEIZ/71lsCl5OYJ8Ap6Gi3c6UcIAt9wCmjLttqWgwJ8An4FFg30U7Y0kgWTaBgEkRf+/pkcgjaTRI848TTxAY6J1f6nOgZ3oNdLWK4HkRVpXqeCXVCpHnIbph8d3cIz+5dfv66F5+/InmAMZZiLQUEGKPhU+du3kd+PlO2jyDHx7oCtt1AYQzvHOAGxxOz7uKQ45m3kaw4jz5oNMtsK+P93MYAv0iVKArrCISg2hFP5mofiNZXURBPatFRLbbc5o71vPmaBsu1zPsWhfZYW7asH+letSBnDfAkjIHsliO0/u/K0ffFocvnugCyyDA8Q8LiGxlGpK/tzjHQaENIkWpxnLLkwxxU9Vpw7/x72wjyhQhBcWqJOrqIkaW5IbdDOt4SV524y/2ZFuC3Ab02P3CTiGf0rKXPKnj4FQ79JAoBS0oEKb0k4nqT3L1O/WkIb/giJBk2sadQ9qGwjQlP6gvEZcZNblIaF5zLRd3jc758qTDTxN3fzVqrNl9z17a+r94okPMHJn28T6j41Ec0X1rd9hk9JFMMZEdBhNMKdLINnYKUfWwvJbqqp+5Ml8wJi/7pHvtYMwrH2AWLT2Iob2ARXWip/Q1jQP5ewPpoEblvuBKCvhkvpeg87vRAvs01Dw10OWRF3jDqCvR+SN6yoe+/czL8YpqCy5xz/mzbiqnatR834rln9nUy49CBdrHSEbAvvZ6sw4F3FhdSwuajvRQU+HEx1OPL4/1SU6m5mwlzO+C7gD4EhTrrawWDKrt+qoYPo7ay+HkrN0KRV/iiIcSioZAaTG0hUHb2mLRJiDUKSg2jvA6AqLtjLWlTWOs8tsSNN1Hzd2PKVKPiWGbjwzbNkX4kjrobYgMUCwDlWu4fGtc1TMh0pxKqEDnJRapBHnjurTiL7DnFEBFUWDktfjAJdLH5TawHUXWzIGbaYs//BbXsPP+jlFyKahMeqPeS46kkae5JG2+Vd7992gu9EmfkJY3BHXgTA9Vx0AbQ6BfxBDoFzH8z/AlAP8BmM5ocebFmOwAAAAASUVORK5CYII=`,
     nullimg = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==',
@@ -78,7 +78,7 @@ let LocalRaws = [
     loadcustom = true, isKF = false, isMQ = false, isMobile = false, realedits = true, rhview = false,
     userimgst, loclist, $realtimeView, $dialog, $textAreas, $root, $node, $node1, $this, $panel, file, formData, FileData, reader, img, begin,
     OnlineRawslists, olhaved, HeContent, OnlineRaws = [], uupath = [], localSmile = [], KFstyle = "", realeditcheck = '',
-    i, s, l, t, aId, aToken, aUser, aPass, pToken, user, pass, loginf, temp;
+    i, s, l, t, aId, aToken, aUser, aPass, pToken, user, pass, loginf, temp,num;
 // 客制化配置
 if (localStorage.StickerConf) { customize = JSON.parse(localStorage.StickerConf) }
 else { loadcustom = false; localStorage.setItem('StickerConf', JSON.stringify(defaultSConf)); }
@@ -109,7 +109,6 @@ customize.lcimglists ? loclist = customize.lcimglists : loclist = [];
 localStorage.userimgst ? userimgst = localStorage.userimgst : userimgst = `["https://sticker.inari.site/null.jpg"]`;
 const UserSmileList = JSON.parse(userimgst), iApi = customize.imgapi, cApi = customize.cloudapi, olApi = customize.onlineraw;
 let realedit = customize.realedit;
-if (realedit && isMQ == false) { realeditcheck = 'checked' }
 if (localStorage.onlineraws) { OnlineRaws = JSON.parse(localStorage.onlineraws); }
 // 网站是否为KF
 for (i = 0; i < check.length; i++) { if (window.location.href.indexOf(check[i]) > -1) { isKF = true; KFstyle = 'style="display:none"'; break; } }
@@ -120,6 +119,7 @@ let kfImgPath = typeof imgpath !== 'undefined' ? imgpath : ''; if (isKfMobile) k
 for (i = 0; i < mbcheck.length; i++) { if (window.location.href.indexOf(mbcheck[i]) > -1) { isMobile = true; break; } }
 // 检测多重引用
 for (i = 0; i < mqcheck.length; i++) { if (window.location.href.indexOf(mqcheck[i]) > -1) { isMQ = true; } }
+if (realedit && isMQ == false) { realeditcheck = 'checked' }
 
 
 /**
@@ -325,22 +325,22 @@ let stickerppkanban = document.createElement("div");
 if (isKfMobile == true || isMobile == true) {
     if (localStorage.imgmoveMb != null) {
         let imgmoveMb = JSON.parse(localStorage.imgmoveMb);
-        stickerppkanban.innerHTML = `<div id = "stickerppkanban" style = "position:fixed;left:${Math.floor(imgmoveMb[0] * ww)}px;top:${Math.floor(imgmoveMb[1] * wh)}px;z-index:88;cursor:pointer;" >
+        stickerppkanban.innerHTML = `<div id = "stickerppkanban" style = "position:fixed;left:${Math.floor(imgmoveMb[0] * ww)}px;top:${Math.floor(imgmoveMb[1] * wh)}px;z-index:88;cursor:pointer;min-width:128px; min-height=128px;" >
   <img class="stickerppkanban" src = ${customize.kanbanimg} width =${Math.floor(customize.kanbansize / 2) + "%"} height =${Math.floor(customize.kanbansize / 2) + "%"}></div>`;
     }
     else {
-        stickerppkanban.innerHTML = `<div id = "stickerppkanban" style = "position:fixed;left:5px;top:300px;z-index:88;cursor:pointer;" >
+        stickerppkanban.innerHTML = `<div id = "stickerppkanban" style = "position:fixed;left:5px;top:300px;z-index:88;cursor:pointer;min-width:128px; min-height=128px;" >
   <img class="stickerppkanban" src = ${customize.kanbanimg} width =${Math.floor(customize.kanbansize / 2) + "%"} height =${Math.floor(customize.kanbansize / 2) + "%"}></div>`;
     }
 }
 else {
     if (localStorage.imgmovePc != null) {
         let imgmovePc = JSON.parse(localStorage.imgmovePc);
-        stickerppkanban.innerHTML = `<div id = "stickerppkanban" style = "position:fixed;left:${Math.floor(imgmovePc[0] * ww)}px;top:${Math.floor(imgmovePc[1] * wh)}px;z-index:88;cursor:pointer;" >
+        stickerppkanban.innerHTML = `<div id = "stickerppkanban" style = "position:fixed;left:${Math.floor(imgmovePc[0] * ww)}px;top:${Math.floor(imgmovePc[1] * wh)}px;z-index:88;cursor:pointer;min-width:128px; min-height=128px;" >
   <img class="stickerppkanban" src = ${customize.kanbanimg} width =${customize.kanbansize + "%"} height =${customize.kanbansize + "%"}></div>`;
     }
     else {
-        stickerppkanban.innerHTML = `<div id = "stickerppkanban" style = "position:fixed;left:5px;top:100px;z-index:88;cursor:pointer;" >
+        stickerppkanban.innerHTML = `<div id = "stickerppkanban" style = "position:fixed;left:5px;top:100px;z-index:88;cursor:pointer;min-width:128px; min-height=128px;" >
   <img class="stickerppkanban" src = ${customize.kanbanimg} width =${customize.kanbansize + "%"} height =${customize.kanbansize + "%"}></div>`;
     }
 } document.body.appendChild(stickerppkanban);
@@ -873,12 +873,20 @@ if (isKF == true) {
             else if (t.src.match(/http:\/\/tb2.bdstatic.com\/tb\/editor\/images\/face/)) { i.parentElement.replaceChild(t, i); }
         }
     });
+  /*  document.body.querySelectorAll('a').forEach(i => {
+        if (i.innerHTML === '&lt;	wind_code_1	&gt;') {
+            t = document.createElement("img"); t.src = i.href;
+             i.parentElement.replaceChild(t, i);
+        }
+    });*/
+    //<a href="https://sm.ms/image/1QrdSctTsVvjoRM" target="_blank">&lt;	wind_code_1	&gt;</a>
 }
 // 修复实时编辑模式下phpwind的回复某楼
+if(isKfMobile==false){
 $(document).on('click', "a[title='回复此楼']", function (e) {
     temp = e.target.getAttribute("onclick").replace(/postreply\('*([^\'\"]*)','[^\'\"]*'\);/g, '$1');
-    $('.StickerPPHtmlEditer')[0].innerHTML += `<fieldset><legend>quote:</legend>${temp}</fieldset><br>`;
-}).on('click', "a[title='多重回复']", function () { if (realedit == true) { realedits = false }; $('textarea').show(); $('.StickerPPHtmlEditerP').hide(); })
+    $('.StickerPPHtmlEditer')[0].innerHTML += `<fieldset><legend>quote:</legend>${temp}</fieldset><br>`;})
+    .on('click', "a[title='多重回复']", function () { if (realedit == true) { realedits = false }; $('textarea').show(); $('.StickerPPHtmlEditerP').hide(); })
     .on("change", "#attachment_1", function (e) { num = 0; readFile(e, num); })
     .on("change", "#attachment_2", function (e) { num = 1; readFile(e, num); })
     .on("change", "#attachment_3", function (e) { num = 2; readFile(e, num); })
@@ -899,6 +907,34 @@ $(document).on('click', "a[title='回复此楼']", function (e) {
     .on("click", "#att_span8 .abtn", function () { num = 7; attspan(num); })
     .on("click", "#att_span9 .abtn", function () { num = 8; attspan(num); })
     .on("click", "#att_span10 .abtn", function () { num = 9; attspan(num); });
+}
+else if(isKfMobile==true){
+    $(document).on('click', "a[title='回复此楼']", function (e) {
+    temp = e.target.getAttribute("onclick").replace(/postreply\('*([^\'\"]*)','[^\'\"]*'\);/g, '$1');
+    $('.StickerPPHtmlEditer')[0].innerHTML += `<fieldset><legend>quote:</legend>${temp}</fieldset><br>`;})
+    .on('click', "button[title='多重回复']", function () { if (realedit == true) { realedits = false }; $('textarea').show(); $('.StickerPPHtmlEditerP').hide(); })
+    .on("change", "input[name='attachment_1']", function (e) { num = 0; readFile(e, num); })
+    .on("change", "input[name='attachment_2']", function (e) { num = 1; readFile(e, num); })
+    .on("change", "input[name='attachment_3']", function (e) { num = 2; readFile(e, num); })
+    .on("change", "input[name='attachment_4']", function (e) { num = 3; readFile(e, num); })
+    .on("change", "input[name='attachment_5']", function (e) { num = 4; readFile(e, num); })
+    .on("change", "input[name='attachment_6']", function (e) { num = 5; readFile(e, num); })
+    .on("change", "input[name='attachment_7']", function (e) { num = 6; readFile(e, num); })
+    .on("change", "input[name='attachment_8']", function (e) { num = 7; readFile(e, num); })
+    .on("change", "input[name='attachment_9']", function (e) { num = 8; readFile(e, num); })
+    .on("change", "input[name='attachment_10']", function (e) { num = 9; readFile(e, num); })
+    .on("click", "#att_span1 .abtn", function () { num = 0; attspan(num); })
+    .on("click", "#att_span2 .abtn", function () { num = 1; attspan(num); })
+    .on("click", "#att_span3 .abtn", function () { num = 2; attspan(num); })
+    .on("click", "#att_span4 .abtn", function () { num = 3; attspan(num); })
+    .on("click", "#att_span5 .abtn", function () { num = 4; attspan(num); })
+    .on("click", "#att_span6 .abtn", function () { num = 5; attspan(num); })
+    .on("click", "#att_span7 .abtn", function () { num = 6; attspan(num); })
+    .on("click", "#att_span8 .abtn", function () { num = 7; attspan(num); })
+    .on("click", "#att_span9 .abtn", function () { num = 8; attspan(num); })
+    .on("click", "#att_span10 .abtn", function () { num = 9; attspan(num); });
+}
+
 function readFile(e, num) {
     FileData = e.target.files[0]; if (!/image\/\w+/.test(FileData.type)) { uupath[num] = uploadfile; }
     else { temp = new FileReader(); temp.readAsDataURL(FileData); temp.onload = function (e) { uupath[num] = this.result; } }
@@ -977,8 +1013,8 @@ function bb2html(str) {
 // 杂项
 function attpath(attid, type) {
     let path = '', upath = false;
-    if (type == 'attachment' && IsElement('atturl_' + attid)) { path = getObj('atturl_' + attid).innerHTML; }
-    else if (type == 'upload' && IsElement('attachment_' + attid)) {
+    if (type == 'attachment' ) { path = getObj('atturl_' + attid).innerHTML; }
+    else if (type == 'upload' ) {
         FileData = $('#attachment_' + attid)[0].files[0];
         if (!/image\/\w+/.test(FileData.type)) { path = ''; upath = false; }
         else { path = uupath[attid - 1]; upath = true; }
@@ -1029,11 +1065,13 @@ function dsc(style, code) {
         begin = style.indexOf(temp[i][2]);
         if (begin == -1) { continue; }
         let value = findvalue(style, temp[i][2]);
-        if (temp[i][1] == 2 && value.indexOf('rgb') != -1) { value = WYSIWYD._colorToRgb(value); }
+        if (temp[i][1] == 2 && value.indexOf('rgb') != -1) { value = colorToRgb(value); }
         if (temp[i][1] == 0) { if (value == temp[i][3]) { code = '[' + temp[i][0] + ']' + code + '[/' + temp[i][0] + ']'; } }
         else { code = '[' + temp[i][0] + '=' + value + ']' + code + '[/' + temp[i][0] + ']'; }
         style = style.replace(temp[i][2], '');
     }
+    code = code.replace(/([^>]*)\[align=(left|center|right|justify)\]([^>]*)/ig, '[align=$2]$1$3');
+    code = code.replace(/([^>]*)\[\/align\]([^>]*)/ig, '$1$2[/align]');
     return code;
 }
 function searchtag(tagname, str, action, type) {
@@ -1115,10 +1153,37 @@ function Font(style, str) {
     style = style.toLowerCase();
     for (i in temp) {
         t = style.indexOf(temp[i]); if (t == -1) { continue; }
-        s = findvalue(style, temp[i]); if (in_array(i, ['backcolor', 'color']) && s.indexOf('rgb') != -1) { s = WYSIWYD._colorToRgb(s); }
+        s = findvalue(style, temp[i]); if (in_array(i, ['backcolor', 'color']) && s.indexOf('rgb') != -1) { s = colorToRgb(s); }
         str = '[' + i + '=' + s + ']' + str + '[/' + i + ']';
     }
     return str;
+}
+function colorToRgb(v) {
+	if (!v) return '';
+    let red,green,blue;
+	function hex(d) {
+		return (d < 16) ? ("0" + d.toString(16)) : d.toString(16);
+	}
+	if (typeof v == "number") {
+		red = v & 0xFF;
+		green = (v >> 8) & 0xFF;
+		blue = (v >> 16) & 0xFF;
+		return "#" + hex(red) + hex(green) + hex(blue);
+	}
+	if (v.substr(0, 3) == "rgb") {
+		let re = /rgb\s*\(\s*([0-9]+)\s*,\s*([0-9]+)\s*,\s*([0-9]+)\s*\)/;
+		if (v.match(re)) {
+			red = parseInt(RegExp.$1);
+			green = parseInt(RegExp.$2);
+			blue = parseInt(RegExp.$3);
+			return "#" + hex(red) + hex(green) + hex(blue);
+		}
+		return null;
+	}
+	if (v.substr(0, 1) == "#") {
+		return v;
+	}
+	return null;
 }
 // CURD方法
 function usercfunc() {
