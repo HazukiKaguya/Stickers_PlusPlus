@@ -1,4 +1,5 @@
 # Stickers_PlusPlus  
+Stickers PlusPlus Plugin.   
 表情贴纸增强插件，理论上适用于所有**存在纯文本编辑模式且支持BBcode/Markdown并支持图片外链**的网站，   
 目前在**S1论坛实测除移动版快捷回复模式**均兼容；  在**某四个论坛实测所有模式均完全正常**；  
 [更新记录](#%E6%9B%B4%E6%96%B0%E8%AE%B0%E5%BD%95)  
