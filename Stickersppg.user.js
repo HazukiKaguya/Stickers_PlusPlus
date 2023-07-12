@@ -2,7 +2,7 @@
 // @name        表情贴纸增强插件
 // @namespace   https://github.com/HazukiKaguya/Stickers_PlusPlus
 // @homepage    https://github.com/HazukiKaguya/Stickers_PlusPlus
-// @version     2.1.5
+// @version     2.1.6
 // @author      HazukiKaguya
 // @description 回复表情，插图扩展插件，在发帖时快速输入自定义表情和论坛BBCODE
 // @icon        https://sticker.inari.site/favicon.ico
@@ -34,10 +34,11 @@
 // jQuery隔离
 this.$ = this.jQuery = jQuery.noConflict(true);
 // 默认配置&本地贴纸源
-const updatelog = '版本V2.1.5, 本次更新日志: \n 增加了一些常用bbcode',
+const updatelog = '版本V2.1.6, 本次更新日志: \n 增加看板娘透明度设置',
     defaultSConf = {
         "version": "2.1.0",
         "kanbansize": "64",
+        "kbopacity": "100",
         "kanbanimg": "https://sticker.inari.site/truenight.gif",
         "imgapi": "https://up.inari.site/api/v1/",
         "cloudapi": "https://api.inari.site/?s=App.User_User.",
@@ -89,6 +90,7 @@ if (customize.version != defaultSConf.version) {
     customize.cloudapi = defaultSConf.cloudapi;
     if (!customize.kanbanimg) customize.kanbanimg = defaultSConf.kanbanimg;
     if (!customize.kanbansize) customize.kanbansize = defaultSConf.kanbansize;
+    if (!customize.kbopacity) customize.kbopacity = defaultSConf.kbopacity;
     if (!customize.imgapi) customize.imgapi = defaultSConf.imgapi;
     //if (!customize.cloudapi) customize.cloudapi = defaultSConf.cloudapi;
     if (!customize.onlineraw) customize.onlineraw = defaultSConf.onlineraw;
@@ -328,22 +330,22 @@ let stickerppkanban = document.createElement("div");
 if (isKfMobile == true || isMobile == true) {
     if (localStorage.imgmoveMb != null) {
         let imgmoveMb = JSON.parse(localStorage.imgmoveMb);
-        stickerppkanban.innerHTML = `<div id = "stickerppkanban" style = "position:fixed;left:${Math.floor(imgmoveMb[0] * ww)}px;top:${Math.floor(imgmoveMb[1] * wh)}px;z-index:88;cursor:pointer;min-width:128px; min-height=128px;" >
+        stickerppkanban.innerHTML = `<div id = "stickerppkanban" style = "filter:opacity(${customize.kbopacity + "%"});position:fixed;left:${Math.floor(imgmoveMb[0] * ww)}px;top:${Math.floor(imgmoveMb[1] * wh)}px;z-index:88;cursor:pointer;min-width:128px; min-height=128px;" >
   <img class="stickerppkanban" src = ${customize.kanbanimg} width =${Math.floor(customize.kanbansize / 2) + "%"} height =${Math.floor(customize.kanbansize / 2) + "%"}></div>`;
     }
     else {
-        stickerppkanban.innerHTML = `<div id = "stickerppkanban" style = "position:fixed;left:5px;top:300px;z-index:88;cursor:pointer;min-width:128px; min-height=128px;" >
+        stickerppkanban.innerHTML = `<div id = "stickerppkanban" style = "filter:opacity(${customize.kbopacity + "%"});position:fixed;left:5px;top:300px;z-index:88;cursor:pointer;min-width:128px; min-height=128px;" >
   <img class="stickerppkanban" src = ${customize.kanbanimg} width =${Math.floor(customize.kanbansize / 2) + "%"} height =${Math.floor(customize.kanbansize / 2) + "%"}></div>`;
     }
 }
 else {
     if (localStorage.imgmovePc != null) {
         let imgmovePc = JSON.parse(localStorage.imgmovePc);
-        stickerppkanban.innerHTML = `<div id = "stickerppkanban" style = "position:fixed;left:${Math.floor(imgmovePc[0] * ww)}px;top:${Math.floor(imgmovePc[1] * wh)}px;z-index:88;cursor:pointer;min-width:128px; min-height=128px;" >
+        stickerppkanban.innerHTML = `<div id = "stickerppkanban" style = "filter:opacity(${customize.kbopacity + "%"});position:fixed;left:${Math.floor(imgmovePc[0] * ww)}px;top:${Math.floor(imgmovePc[1] * wh)}px;z-index:88;cursor:pointer;min-width:128px; min-height=128px;" >
   <img class="stickerppkanban" src = ${customize.kanbanimg} width =${customize.kanbansize + "%"} height =${customize.kanbansize + "%"}></div>`;
     }
     else {
-        stickerppkanban.innerHTML = `<div id = "stickerppkanban" style = "position:fixed;left:5px;top:100px;z-index:88;cursor:pointer;min-width:128px; min-height=128px;" >
+        stickerppkanban.innerHTML = `<div id = "stickerppkanban" style = "filter:opacity(${customize.kbopacity + "%"});position:fixed;left:5px;top:100px;z-index:88;cursor:pointer;min-width:128px; min-height=128px;" >
   <img class="stickerppkanban" src = ${customize.kanbanimg} width =${customize.kanbansize + "%"} height =${customize.kanbansize + "%"}></div>`;
     }
 } document.body.appendChild(stickerppkanban);
@@ -439,6 +441,7 @@ const createContainer = function (textArea, qufen) {
      <table><tr><td>
      <li><input type="text" class="conftext" id="kanbanimg${qufen}" value="">&nbsp;<input type="button" class="stickerpp-res-kanbanimg" value="默认">（看板娘图片URL）</li>
      <li><input type="number" class="conftext" id="kanbansize${qufen}" value="">&nbsp;<input type="button" class="stickerpp-res-kanbansize" value="默认">（看板娘大小，移动端/2）</li>
+     <li><input type="number" class="conftext" id="kbopacity${qufen}" value="">&nbsp;<input type="button" class="stickerpp-res-kbopacity" value="默认">（看板娘透明度百分比，取值0-100）</li>
      <li><input type="text" class="conftext" id="onlineraw${qufen}" value="">&nbsp;<input type="button" class="stickerpp-res-onlineraw" value="默认">（在线贴纸仓库API）</li>
      <li><input type="text" class="conftext" id="imgapi${qufen}" value="">&nbsp;<input type="button" class="stickerpp-res-imgapi" value="默认">（图片上传图床API）</li>
      <li><input type="text" class="conftext" id="olimglists${qufen}" disabled="true" value="">&nbsp;<input type="button" class="stickerpp-res-olimglists" value="默认">（已选在线贴纸ID数组）</li>
@@ -609,6 +612,7 @@ const createContainer = function (textArea, qufen) {
         // 载入个性化
         $("#kanbanimg" + qufen).attr("value", customize.kanbanimg);
         $("#kanbansize" + qufen).attr("value", customize.kanbansize);
+        $("#kbopacity" + qufen).attr("value", customize.kbopacity);
         $("#onlineraw" + qufen).attr("value", customize.onlineraw);
         $("#imgapi" + qufen).attr("value", customize.imgapi);
         $("#olimglists" + qufen).attr("value", customize.olimglists);
@@ -624,6 +628,8 @@ const createContainer = function (textArea, qufen) {
         customize.kanbanimg = defaultSConf.kanbanimg; localStorage.setItem('StickerConf', JSON.stringify(customize)); alert(resT);
     }).on('click', '.stickerpp-res-kanbansize', function () {
         customize.kanbansize = defaultSConf.kanbansize; localStorage.setItem('StickerConf', JSON.stringify(customize)); alert(resT);
+    }).on('click', '.stickerpp-res-kbopacity', function () {
+        customize.kbopacity = defaultSConf.kbopacity; localStorage.setItem('StickerConf', JSON.stringify(customize)); alert(resT);
     }).on('click', '.stickerpp-res-onlineraw', function () {
         customize.onlineraw = defaultSConf.onlineraw; localStorage.setItem('StickerConf', JSON.stringify(customize)); alert(resT);
     }).on('click', '.stickerpp-res-imgapi', function () {
@@ -753,6 +759,8 @@ const createContainer = function (textArea, qufen) {
         customize.kanbanimg = e.target.value; localStorage.setItem('StickerConf', JSON.stringify(customize));
     }).on('blur', '#kanbansize' + qufen, function (e) {
         customize.kanbansize = e.target.value; localStorage.setItem('StickerConf', JSON.stringify(customize));
+    }).on('blur', '#kbopacity' + qufen, function (e) {
+        customize.kbopacity = e.target.value; localStorage.setItem('StickerConf', JSON.stringify(customize));
     }).on('blur', '#onlineraw' + qufen, function (e) {
         customize.onlineraw = e.target.value; localStorage.setItem('StickerConf', JSON.stringify(customize));
     }).on('blur', '#imgapi' + qufen, function (e) {
