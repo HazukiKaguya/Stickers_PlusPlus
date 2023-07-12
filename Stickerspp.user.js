@@ -36,7 +36,7 @@ this.$ = this.jQuery = jQuery.noConflict(true);
 // 默认配置&本地贴纸源
 const updatelog = '版本V2.1.6, 本次更新日志: \n 增加看板娘透明度设置',
     defaultSConf = {
-        "version": "2.1.0",
+        "version": "2.1.6",
         "kanbansize": "64",
         "kbopacity": "100",
         "kanbanimg": "https://sticker.inari.site/truenight.gif",
