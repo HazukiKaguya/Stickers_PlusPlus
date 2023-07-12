@@ -2,17 +2,18 @@
 // @name        表情贴纸增强插件
 // @namespace   https://github.com/HazukiKaguya/Stickers_PlusPlus
 // @homepage    https://github.com/HazukiKaguya/Stickers_PlusPlus
-// @version     2.1.3
+// @version     2.1.4
 // @author      HazukiKaguya
 // @description 回复表情，插图扩展插件，在发帖时快速输入自定义表情和论坛BBCODE
 // @icon        https://sticker.inari.site/favicon.ico
-// @include     https://*9shenmi.com*
+// @include     *9shenmi.com*
 // @include     https://*kf*
-// @include     https://*miaola*
-// @include     https://*365gal*
-// @include     https://*-plus.net*
-// @include     https://bbs.zdfx.net*
-// @include     *bbs*
+// @include     *miaola*
+// @include     *365gal*
+// @include     *-plus.net*
+// @include     *zdfx.net*
+// @include     *saraba1st.com*
+// @include     *dmhy.org*
 // @copyright   2020-2022, Hazukikaguya
 // @grant       GM_getValue
 // @grant       GM_setValue
@@ -33,7 +34,7 @@
 // jQuery隔离
 this.$ = this.jQuery = jQuery.noConflict(true);
 // 默认配置&本地贴纸源
-const updatelog = '版本V2.1.3, 本次更新日志: \n 规定看板娘拖动右侧缩小的最小大小，修复Bugs.',
+const updatelog = '版本V2.1.4, 本次更新日志: \n 优化include项目',
     defaultSConf = {
         "version": "2.1.0",
         "kanbansize": "64",
