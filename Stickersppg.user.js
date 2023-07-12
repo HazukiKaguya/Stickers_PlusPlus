@@ -2,7 +2,7 @@
 // @name        表情贴纸增强插件
 // @namespace   https://github.com/HazukiKaguya/Stickers_PlusPlus
 // @homepage    https://github.com/HazukiKaguya/Stickers_PlusPlus
-// @version     2.1.4
+// @version     2.1.5
 // @author      HazukiKaguya
 // @description 回复表情，插图扩展插件，在发帖时快速输入自定义表情和论坛BBCODE
 // @icon        https://sticker.inari.site/favicon.ico
@@ -34,7 +34,7 @@
 // jQuery隔离
 this.$ = this.jQuery = jQuery.noConflict(true);
 // 默认配置&本地贴纸源
-const updatelog = '版本V2.1.4, 本次更新日志: \n 优化include项目',
+const updatelog = '版本V2.1.5, 本次更新日志: \n 增加了一些常用bbcode',
     defaultSConf = {
         "version": "2.1.0",
         "kanbansize": "64",
@@ -191,11 +191,13 @@ else if (!isKF) {
         addr: [
             '[sell=100][/sell]', '[quote][/quote]', '[backcolor=#000][color=#000]在此输入[/color][/backcolor]', '[hide=100][/hide]', '[code][/code]', '[strike][/strike]', '[fly][/fly]', '[color=#00FF00][/color]',
             '[b][/b]', '[u][/u]', '[i][/i]', '[hr]', '[backcolor=][/backcolor]', '[url=][/url]', '[img][/img]', '[url=][img][/img][/url]', '[table][/table]', '[tr][/tr]', '[td][/td]',
-            '[align=left][/align]', '[align=center][/align]', '[align=right][/align]', '[audio][/audio]', '[flash=audio][/flash]', '[video][/video]', '[media][/media]', '[flash][/flash]', '[email][/email]', '[list][/list]', '[font=字体名]文字[/font]', '[collapse=文字]需要折叠的内容[/collapse]', '[dice]d楼层数[/dice]', '[@用户名]or[@用户ID]'
+            '[align=left][/align]', '[align=center][/align]', '[align=right][/align]', '[audio][/audio]', '[flash=audio][/flash]', '[video][/video]', '[media][/media]', '[flash][/flash]', '[email][/email]', 
+	    '[list][/list]', '[font=字体名]文字[/font]', '[collapse=文字]需要折叠的内容[/collapse]', '[dice]d楼层数[/dice]', '[@用户名]or[@用户ID]','[spoiler=折叠内容][/spoiler]','[mediainfo][/mediainfo]'
         ],
         ref: [
             '出售贴sell=售价', '引用', '隐藏(黑条)', '隐藏(hide=)', '插入代码', '删除线', 'Fly', '文字颜色', '粗体', '下划线', '斜体', '水平线', '背景色', '插入链接',
-            '插入图片', '插入超链接图片', '插入表格框', '插入表格行', '插入表格列', '左对齐', '居中', '右对齐', '插入音频', '插入flash音频', '插入视频[video]', '插入视频[media]', '插入flash', 'Email', '插入列表', '字体', '折叠', 'ngaRoll点', 'nga@用户'
+            '插入图片', '插入超链接图片', '插入表格框', '插入表格行', '插入表格列', '左对齐', '居中', '右对齐', '插入音频', '插入flash音频', '插入视频[video]',
+	    '插入视频[media]', '插入flash', 'Email', '插入列表', '字体', 'nga折叠内容', 'ngaRoll点', 'nga@用户','U2折叠内容','U2媒体信息'
         ]
     };
 };
