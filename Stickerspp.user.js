@@ -34,7 +34,7 @@
 // jQuery隔离
 this.$ = this.jQuery = jQuery.noConflict(true);
 // 默认配置&本地贴纸源
-const updatelog = '版本V2.1.6, 本次更新日志: \n 增加看板娘透明度设置',
+const updatelog = '版本V2.1.7, 本次更新日志: \n 修复某论坛第三方手机视图下上传图片按钮会同时提交文本表单的问题',
     defaultSConf = {
         "version": "2.1.6",
         "kanbansize": "64",
