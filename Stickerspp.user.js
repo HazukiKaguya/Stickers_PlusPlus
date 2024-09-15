@@ -2,7 +2,7 @@
 // @name        表情贴纸增强插件
 // @namespace   https://github.com/HazukiKaguya/Stickers_PlusPlus
 // @homepage    https://github.com/HazukiKaguya/Stickers_PlusPlus
-// @version     2.1.6
+// @version     2.1.7
 // @author      HazukiKaguya
 // @description 回复表情，插图扩展插件，在发帖时快速输入自定义表情和论坛BBCODE
 // @icon        https://sticker.inari.site/favicon.ico
