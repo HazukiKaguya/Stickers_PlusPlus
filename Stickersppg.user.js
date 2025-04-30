@@ -835,7 +835,7 @@ const StickerPPLoadSticker = function (thePage) {
     $.ajax({ url: olApi + temp + '&page=' + thePage + '&perpage=20', type: 'POST', dataType: 'json' })
         .done(data => {
             if (data.ret == 200) { success(data); }
-            else { alert('操作' + renT + data.ret + '错误，' + data.msg) }
+            else { alert(data.msg + ' 操作' + renT + data.ret + '错误，' + data.msg) }
         })
         .fail(data => { alert(errT); console.log(data) });
 }
@@ -1314,9 +1314,9 @@ function imgbindcheckfunc() {
                 if (data.ret == 200) {
                     temp = data.data;
                     if (temp.tutoken != "") { localStorage.setItem('logindata', JSON.stringify([aId, aToken, temp.tutoken])); alert("检测到您已绑定图床账号！上传图片将使用绑定的图床账号！"); }
-                    else if (confirm(imgunbindT + notbindT)) { imgbindfunc() }
+                    else if (confirm(imgunbindT+notbindT)) { imgbindfunc() }
                     else { alert(notbindT) }
-                } else { alert("检测图床绑定状态" + renT + data.ret + '错误，' + data.msg)) }
+                } else { alert("检测图床绑定状态" + renT + data.ret + '错误，' + data.msg) }
             }).fail(data => { alert(errT); console.log(data) });
 }
 function imgbindfunc() {
