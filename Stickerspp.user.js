@@ -2,7 +2,7 @@
 // @name        表情贴纸增强插件
 // @namespace   https://github.com/HazukiKaguya/Stickers_PlusPlus
 // @homepage    https://github.com/HazukiKaguya/Stickers_PlusPlus
-// @version     2.1.7
+// @version     2.1.8
 // @author      HazukiKaguya
 // @description 回复表情，插图扩展插件，在发帖时快速输入自定义表情和论坛BBCODE
 // @icon        https://sticker.inari.site/favicon.ico
@@ -34,7 +34,7 @@
 // jQuery隔离
 this.$ = this.jQuery = jQuery.noConflict(true);
 // 默认配置&本地贴纸源
-const updatelog = '版本V2.1.7, 本次更新日志: \n 修复某论坛第三方手机视图下上传图片按钮会同时提交文本表单的问题',
+const updatelog = '版本V2.1.8, 本次更新日志: \n 优化账号登入状态过期时的400报错文案',
     defaultSConf = {
         "version": "2.1.6",
         "kanbansize": "64",
@@ -836,7 +836,7 @@ const StickerPPLoadSticker = function (thePage) {
     $.ajax({ url: olApi + temp + '&page=' + thePage + '&perpage=20', type: 'POST', dataType: 'json' })
         .done(data => {
             if (data.ret == 200) { success(data); }
-            else { alert(data.msg + ' 操作' + renT + data.ret) }
+            else { alert('操作' + renT + data.ret + '错误，' + data.msg) }
         })
         .fail(data => { alert(errT); console.log(data) });
 }
@@ -1294,7 +1294,7 @@ function regfunc() {
                         if (data.ret == 200) {
                             temp = data.data; localStorage.setItem('logindata', JSON.stringify([temp.user_id, temp.token]));
                             GM_setValue('user', user); GM_setValue('pass', pass); GM_setValue('sppuid', temp.user_id); GM_setValue('spptoken', temp.token);
-                            if (confirm(imgunbindT)) { imgbindfunc() }
+                            if (confirm(imgunbindT+notbindT)) { imgbindfunc() }
                             else { alert(notbindT); }
                         }
                         else if (data.ret != 200) { alert('Oops！' + data.ret + '注册' + renT + data.msg) }
@@ -1309,7 +1309,7 @@ function regfunc() {
 }
 // 绑定检测&图床绑定方法
 function imgbindcheckfunc() {
-    loginf = JSON.parse(localStorage.logindata); aId = loginf[0]; aToken = loginf[1],
+    loginf = JSON.parse(localStorage.logindata); aId = loginf[0]; aToken = loginf[1];
         $.ajax({ url: cApi + 'Tutoken&user_id=' + aId + '&token=' + aToken, type: 'POST', dataType: 'json' })
             .done(data => {
                 if (data.ret == 200) {
@@ -1317,7 +1317,7 @@ function imgbindcheckfunc() {
                     if (temp.tutoken != "") { localStorage.setItem('logindata', JSON.stringify([aId, aToken, temp.tutoken])); alert("检测到您已绑定图床账号！上传图片将使用绑定的图床账号！"); }
                     else if (confirm(imgunbindT + notbindT)) { imgbindfunc() }
                     else { alert(notbindT) }
-                } else { alert("检测图床绑定状态" + renT + data.ret) }
+                } else { alert("检测图床绑定状态" + renT + data.ret + '错误，' + data.msg)) }
             }).fail(data => { alert(errT); console.log(data) });
 }
 function imgbindfunc() {
@@ -1330,7 +1330,7 @@ function imgbindfunc() {
                 $.ajax({ url: cApi + 'tupdate&user_id=' + aId + '&token=' + aToken + '&tupdate=' + temp, type: 'POST', dataType: 'json' })
                     .done(data => {
                         if (data.ret == 200) { alert("已绑定图床账号！") }
-                        else { alert(data.msg + ' 图床账号绑定' + renT + data.ret) }
+                        else { alert(data.msg + ' 图床账号绑定' + renT + data.ret + '错误，' + data.msg) }
                     }).fail(data => { alert(errT); console.log(data) });
             } else if (data.status == false) { alert(data.message) }
         }).fail(data => { alert(errT); console.log(data) });
@@ -1345,7 +1345,7 @@ function ltcfunc() {
                 if (data.ret == 200) {
                     if (confirm('确定同步【本地数据到云端】吗？这是最后一次确认！')) { alert(doneT); }
                     else { alert(exiT) }
-                } else { alert(data.msg + '同步操作' + renT + data.ret); }
+                } else { alert(data.msg + '同步操作' + renT + data.ret + '错误，' + data.msg); }
             })
             .fail(data => { alert(errT); console.log(data) });
     } else { alert('本地数据为空！同步到云端' + exiT); }
@@ -1359,7 +1359,7 @@ function ctlfunc() {
                     if (confirm('确定同步【云端数据到本地】吗？这是最后一次确认！')) { localStorage.setItem('userimgst', JSON.stringify(temp.split(','))); alert(doneT); location.reload(); }
                     else { alert(exiT) }
                 } else { alert("云端数据为空！同步到本地" + exiT); }
-            } else { alert(data.msg + '同步操作' + renT + data.ret); }
+            } else { alert(data.msg + '同步操作' + renT + data.ret + '错误，' + data.msg); }
         }).fail(data => { alert(errT); console.log(data) });
 }
 // 上传图片方法
